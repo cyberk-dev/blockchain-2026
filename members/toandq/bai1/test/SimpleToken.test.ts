@@ -51,5 +51,18 @@ describe("SimpleToken", function () {
       await expect(simpleToken.connect(addr1).mint(owner.address, amount)).to.be.revertedWithCustomError(simpleToken, "OwnableUnauthorizedAccount");
       await expect(simpleToken.connect(owner).mint(addr1.address, amount)).to.changeTokenBalance(ethers, simpleToken, addr1.address, amount);
     });
+
+    it("Should not allow minting to the zero address", async function () {
+      const { simpleToken } = await loadFixture(deploySimpleTokenFixture)
+
+      await expect(simpleToken.mint(ethers.ZeroAddress, DEFAULT_MINT_AMOUNT)).to.be.revert(ethers);
+    });
+
+    // default erc20 contract does allow this action
+    it("Should still allow to mint 0 tokens", async function () {
+      const { simpleToken, owner } = await loadFixture(deploySimpleTokenFixture)
+
+      await expect(simpleToken.mint(owner.address, BigInt(0))).to.changeTokenBalance(ethers, simpleToken, owner.address, BigInt(0));
+    });
   });
 });
