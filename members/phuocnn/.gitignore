@@ -1,0 +1,20 @@
+# Dependencies
+/node_modules
+
+# Hardhat
+/artifacts
+/cache
+/typechain-types
+coverage
+coverage.json
+.hardhat-network-fork
+
+# Build
+/dist
+/build
+
+# Misc
+.env
+.DS_Store
+*.pem
+*.secret
