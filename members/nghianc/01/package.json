@@ -8,6 +8,8 @@
     "@nomicfoundation/hardhat-toolbox-viem": "^5.0.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.8.5",
+    "chai": "^4.3.10",
+    "ethers": "^6.13.1",
     "forge-std": "github:foundry-rs/forge-std#v1.9.4",
     "hardhat": "^3.0.14",
     "typescript": "~5.8.0",
