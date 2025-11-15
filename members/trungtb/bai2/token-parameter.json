@@ -1,0 +1,7 @@
+{
+  "SimpleTokenModule": {
+    "name": "Duniverse Token",
+    "symbol": "DUNI",
+    "initialSupply": "10000000000000000000000000000"
+  }
+}
