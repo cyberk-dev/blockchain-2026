@@ -1,10 +1,11 @@
 import hardhatToolboxViemPlugin from '@nomicfoundation/hardhat-toolbox-viem';
 import { configVariable, defineConfig } from 'hardhat/config';
 import { transferToken } from './tasks/transfer-token.js';
+import { createToken } from './tasks/create-token.js';
 
 export default defineConfig({
   plugins: [hardhatToolboxViemPlugin],
-  tasks: [transferToken],
+  tasks: [transferToken, createToken],
   solidity: {
     profiles: {
       default: {
