@@ -6,19 +6,17 @@ import { network } from "hardhat";
 import TokenModule from "../ignition/modules/Token.js";
 
 describe("Token", async function () {
-  const { viem, ignition } = await network.connect();
-  const publicClient = await viem.getPublicClient();
-
+  const { ignition } = await network.connect();
   it("Deploy ignition", async function () {
-    const { token } = await ignition.deploy(TokenModule, {
+    const { token }: { token: { address: string } } = await ignition.deploy(TokenModule, {
       parameters: {
         TokenModule: {
-          name: "Cyberk",
-          symbol: "CBK",
+          name: "Anhnh Token",
+          symbol: "ANHT",
           initialSupply: parseUnits("100000000", 18),
         },
-      }
-    })
+      },
+    });
     console.log("token", token.address);
   });
 });

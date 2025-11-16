@@ -10,7 +10,7 @@ export const transferTokenTask = task('transfer-token', 'Transfer token')
         const connection = await hre.network.connect();
         const { ignition, viem } = connection;
         const publicClient = await viem.getPublicClient();
-        const { token } = await ignition.deploy(TokenModule, {
+        const { token }: { token: { write: any } } = await ignition.deploy(TokenModule, {
           parameters
         });
 
