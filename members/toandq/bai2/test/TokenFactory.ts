@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import { network } from "hardhat";
 import { Address, decodeEventLog, isAddress, parseUnits } from "viem";
 import TokenFactory from "../ignition/modules/TokenFactory.js";
+import UpgradeFactoryModule from "../ignition/modules/UpgradeFactory.js";
 
 describe("TokenFactory", async function () {
   const { viem, ignition, networkHelpers, } = await network.connect();
@@ -35,6 +36,9 @@ describe("TokenFactory", async function () {
       factory,
       "TokenDeployed",
     );
+  });
+
+  it.skip('Should upgrade successfully', async () => {
 
   });
 });

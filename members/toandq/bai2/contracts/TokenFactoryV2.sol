@@ -7,11 +7,17 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "./Token.sol";
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
-contract TokenFactory is UUPSUpgradeable, OwnableUpgradeable {
+contract TokenFactoryV2 is UUPSUpgradeable, OwnableUpgradeable {
     mapping(address => bool) public exists;
     address implementation;
 
     event TokenDeployed(
+        address indexed tokenAddress,
+        string name,
+        string symbol
+    );
+
+    event TokenDeployedV2(
         address indexed tokenAddress,
         string name,
         string symbol
@@ -40,11 +46,11 @@ contract TokenFactory is UUPSUpgradeable, OwnableUpgradeable {
 
         exists[instance] = true;
 
-        emit TokenDeployed(instance, tokenName, tokenSymbol);
+        emit TokenDeployedV2(instance, tokenName, tokenSymbol);
     }
 
     function version() public pure returns (uint256) {
-        return 1;
+        return 2;
     }
 
     function _authorizeUpgrade(

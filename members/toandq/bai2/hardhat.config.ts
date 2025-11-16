@@ -1,10 +1,11 @@
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import { configVariable, defineConfig } from "hardhat/config";
 import { transferTokenTask } from "./tasks/transfer-token.js";
+import { upgradeTask } from "./tasks/upgrade-token-factory.js";
 
 export default defineConfig({
   plugins: [hardhatToolboxViemPlugin],
-  tasks: [transferTokenTask],
+  tasks: [transferTokenTask, upgradeTask],
   solidity: {
     npmFilesToBuild: [
       "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol",
