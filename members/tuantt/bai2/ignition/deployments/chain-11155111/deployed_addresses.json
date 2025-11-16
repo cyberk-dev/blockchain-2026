@@ -1,0 +1,14 @@
+{
+  "TokenFactoryWithBeaconModule#TokenFactoryImplementation": "0x764CaA714CfD66cC360482a6e630312945C98434",
+  "TokenFactoryWithBeaconModule#TokenImplementation": "0x26dF142F26381aD52E7dFb4A42956fa1B0aad7Ec",
+  "TokenFactoryWithBeaconModule#TokenBeacon": "0x2FE52B9C7B245F80E8b7c40390fF0A60dA9794A2",
+  "TokenFactoryWithBeaconModule#TokenFactoryProxy": "0x3163d4566aD1b90126225412Bc2c5735eE20bAB4",
+  "TokenFactoryWithBeaconModule#TokenFactory": "0x3163d4566aD1b90126225412Bc2c5735eE20bAB4",
+  "TokenFactoryWithBeaconModule#ProxyAdmin": "0x5DFc47c60f47D2371429a7520018B5Aa34a55470",
+  "UpgradeModule#TokenFactoryImplementationV2": "0x2eEeF971d333Ba39413df328dd7caeDCC7f1C462",
+  "UpgradeModule#TokenImplementationV2": "0x068C47A053391625592A510CFcF77c7B9723DB6a",
+  "UpgradeModuleV3#TokenFactoryImplementationV3": "0xeB1bb4ab23AE4428282f357E1545Ac8BC916cf25",
+  "UpgradeModuleV3#TokenImplementationV3": "0xA0f87ce118235c13383dC187b0C827c980649Eb5",
+  "UpgradeModuleV4#TokenFactoryImplementationV4": "0x8F57077574087E0e20c4d3BfA67aC242e807C773",
+  "UpgradeModuleV4#TokenImplementationV4": "0x5327F42e8840053c5924e81aa3c4aAb064cD6f91"
+}
