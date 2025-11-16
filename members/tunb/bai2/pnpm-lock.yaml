@@ -12,6 +12,9 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0
     devDependencies:
+      '@nomicfoundation/hardhat-ethers':
+        specifier: ^4.0.3
+        version: 4.0.3(hardhat@3.0.14)
       '@nomicfoundation/hardhat-ignition':
         specifier: ^3.0.5
         version: 3.0.5(@nomicfoundation/hardhat-verify@3.0.7(hardhat@3.0.14))(hardhat@3.0.14)
@@ -21,6 +24,9 @@ importers:
       '@types/node':
         specifier: ^22.8.5
         version: 22.19.1
+      ethers:
+        specifier: ^6.15.0
+        version: 6.15.0
       forge-std:
         specifier: github:foundry-rs/forge-std#v1.9.4
         version: https://codeload.github.com/foundry-rs/forge-std/tar.gz/1eea5bae12ae557d589f9f0f0edae2faa47cb262
@@ -351,6 +357,11 @@ packages:
 
   '@nomicfoundation/hardhat-errors@3.0.4':
     resolution: {integrity: sha512-GVl43q8iEFoA1XYk4aSzMMS09+3o/2unnNbnM96KvnnA+82KziPZpAJ4P0quwFTS2C4bbmKF2FWK2UOMTA0T0A==}
+
+  '@nomicfoundation/hardhat-ethers@4.0.3':
+    resolution: {integrity: sha512-DtYjmHtPM1BenmNm5ZMVn5fTGD4RdDPGE/ElpaLUjDGbkQnn4ytvhqnGsY+osLaWFvDxKfhdI8fyISg53bk8Qw==}
+    peerDependencies:
+      hardhat: ^3.0.7
 
   '@nomicfoundation/hardhat-ignition-viem@3.0.5':
     resolution: {integrity: sha512-bK+Rmg7m6wJxoqXOTxl/HA6AakdS6OUJjGUUYxfFpuXCH9c4tW3Qp7fpgAhI0W3cCPAeT42OANSDlCH/MRZbBA==}
@@ -1138,6 +1149,19 @@ snapshots:
       '@nomicfoundation/hardhat-utils': 3.0.5
     transitivePeerDependencies:
       - supports-color
+
+  '@nomicfoundation/hardhat-ethers@4.0.3(hardhat@3.0.14)':
+    dependencies:
+      '@nomicfoundation/hardhat-errors': 3.0.4
+      '@nomicfoundation/hardhat-utils': 3.0.5
+      debug: 4.4.3
+      ethereum-cryptography: 2.2.1
+      ethers: 6.15.0
+      hardhat: 3.0.14
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
 
   '@nomicfoundation/hardhat-ignition-viem@3.0.5(@nomicfoundation/hardhat-ignition@3.0.5(@nomicfoundation/hardhat-verify@3.0.7(hardhat@3.0.14))(hardhat@3.0.14))(@nomicfoundation/hardhat-verify@3.0.7(hardhat@3.0.14))(@nomicfoundation/hardhat-viem@3.0.1(hardhat@3.0.14)(viem@2.39.0(typescript@5.8.3)(zod@3.25.76)))(@nomicfoundation/ignition-core@3.0.5)(hardhat@3.0.14)(viem@2.39.0(typescript@5.8.3)(zod@3.25.76))':
     dependencies:
