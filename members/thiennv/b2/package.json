@@ -1,5 +1,5 @@
 {
-  "name": "longlst",
+  "name": "b2",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,19 +9,22 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "packageManager": "pnpm@10.18.0",
+  "type": "module",
   "devDependencies": {
     "@nomicfoundation/hardhat-ignition": "^3.0.5",
     "@nomicfoundation/hardhat-toolbox-viem": "^5.0.1",
-    "@types/node": "^22.8.5",
-    "dotenv": "^17.2.3",
+    "@openzeppelin/contracts": "^5.4.0",
+    "@openzeppelin/contracts-upgradeable": "^5.4.0",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.19.1",
     "forge-std": "github:foundry-rs/forge-std#v1.9.4",
-    "hardhat": "^3.0.13",
-    "typescript": "~5.8.0",
-    "viem": "^2.30.0"
+    "hardhat": "^3.0.15",
+    "typescript": "~5.8.3",
+    "viem": "^2.39.0"
   },
-  "type": "module",
   "dependencies": {
-    "@openzeppelin/contracts": "^5.5.0",
-    "@openzeppelin/contracts-upgradeable": "^5.4.0"
+    "chai": "^6.2.1"
   }
 }

@@ -1,9 +1,11 @@
-import "dotenv/config";
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
-import { defineConfig } from "hardhat/config";
+import hardhatKeystore from "@nomicfoundation/hardhat-keystore";
+import { configVariable, defineConfig } from "hardhat/config";
+import { transferTokenTask } from "./task/transfer-token.js";
 
 export default defineConfig({
-  plugins: [hardhatToolboxViemPlugin],
+  plugins: [hardhatToolboxViemPlugin, hardhatKeystore],
+  tasks: [transferTokenTask],
   solidity: {
     profiles: {
       default: {
@@ -19,6 +21,10 @@ export default defineConfig({
         },
       },
     },
+    npmFilesToBuild: [
+      "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol",
+      "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol",
+    ],
   },
   networks: {
     hardhatMainnet: {
@@ -32,8 +38,8 @@ export default defineConfig({
     sepolia: {
       type: "http",
       chainType: "l1",
-      url: process.env.PUBLIC_RPC_URL || "",
-      accounts: process.env.PUBLIC_PRIVATE_KEY ? [process.env.PUBLIC_PRIVATE_KEY] : [],
+      url: configVariable("SEPOLIA_RPC_URL"),
+      accounts: [configVariable("SEPOLIA_PRIVATE_KEY")],
     },
   },
 });

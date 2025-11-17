@@ -1,10 +1,14 @@
-import "dotenv/config";
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
-import { defineConfig } from "hardhat/config";
+import { configVariable, defineConfig } from "hardhat/config";
+import { transferTokenTask } from "./tasks/transfer-token.js";
+import { createTokenTask } from "./tasks/create-token.js";
+import { upgradeEventEmitterTask } from "./tasks/upgrade-event-emitter.js";
 
 export default defineConfig({
   plugins: [hardhatToolboxViemPlugin],
+  tasks: [transferTokenTask, createTokenTask, upgradeEventEmitterTask],
   solidity: {
+    npmFilesToBuild: ["@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol"],
     profiles: {
       default: {
         version: "0.8.28",
@@ -32,8 +36,11 @@ export default defineConfig({
     sepolia: {
       type: "http",
       chainType: "l1",
-      url: process.env.PUBLIC_RPC_URL || "",
-      accounts: process.env.PUBLIC_PRIVATE_KEY ? [process.env.PUBLIC_PRIVATE_KEY] : [],
+      url: "https://eth-sepolia.g.alchemy.com/v2/oHSn32zQQJAtQNGRyvE9i",
+      accounts: [configVariable("SEPOLIA_PRIVATE_KEY")],
     },
+  },
+  ignition: {
+    requiredConfirmations: 1,
   },
 });

@@ -1,8 +1,10 @@
-import "dotenv/config";
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
-import { defineConfig } from "hardhat/config";
+import { configVariable, defineConfig } from "hardhat/config";
+import { transferTokenTask } from "./tasks/transfer-token.js";
+import { createTokenTask } from "./tasks/create-token.js";
 
 export default defineConfig({
+  tasks: [transferTokenTask, createTokenTask],
   plugins: [hardhatToolboxViemPlugin],
   solidity: {
     profiles: {
@@ -32,8 +34,11 @@ export default defineConfig({
     sepolia: {
       type: "http",
       chainType: "l1",
-      url: process.env.PUBLIC_RPC_URL || "",
-      accounts: process.env.PUBLIC_PRIVATE_KEY ? [process.env.PUBLIC_PRIVATE_KEY] : [],
+      url: configVariable("SEPOLIA_RPC_URL"),
+      accounts: [configVariable("SEPOLIA_PRIVATE_KEY")],
     },
+  },
+  ignition: {
+    requiredConfirmations: 1,
   },
 });
