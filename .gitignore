@@ -1,0 +1,21 @@
+# PNPM
+.pnpm-store/
+
+# Dependencies
+node_modules/
+/members/**/node_modules/
+
+# Build files
+/members/**/dist/
+/members/**/out/
+
+# Hardhat
+/members/**/artifacts/
+/members/**/cache/
+/members/**/coverage/
+/members/**/coverage.json
+/members/**/ignition/deployments/
+/members/**/ignition/reports/
+
+# Misc
+.DS_Store

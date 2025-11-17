@@ -1,0 +1,10 @@
+{
+  "TokenModule#TokenImpl": "0xB04cB61CbDDa67b46e70a6C42664Db2A8f0d6D8C",
+  "TokenModule#ERC1967Proxy": "0x5c815b675652c2288b4243DCf321B56eD940AED5",
+  "TokenModule#Token": "0x5c815b675652c2288b4243DCf321B56eD940AED5",
+  "TokenFactoryModule#TokenFactoryImpl": "0xCaB7abA7c768D4261302D1Ce2C8981e3e839b391",
+  "TokenFactoryModule#ERC1967Proxy": "0xaa37B775187819ceB3b934e5e5Fb07f47c59628A",
+  "TokenFactoryModule#TokenFactory": "0xaa37B775187819ceB3b934e5e5Fb07f47c59628A",
+  "UpgradeFactoryModule#FactoryImpv2": "0x950eFa4Df5ec51626aF1D95b4Cee711a93c590a2",
+  "UpgradeFactoryModule#FactoryImpv3": "0x4AD475dcAa2b12F1d24E2487f0b895858ACf28c9"
+}
