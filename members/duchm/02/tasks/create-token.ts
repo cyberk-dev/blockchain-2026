@@ -51,20 +51,16 @@ export const createTokenTask = task("create-token", "Create token")
 
         console.log("Transaction hash=", receipt.transactionHash);
 
-        const tokenCreatedLog = receipt.logs.find(
-          (log) => log.address.toLowerCase() === factory.address.toLowerCase()
-        );
-
-        if (!tokenCreatedLog) {
-          throw new Error("TokenCreated event not found");
-        }
-        const decoded = decodeEventLog({
+        const events = await publicClient.getContractEvents({
+          address: factory.address,
           abi: factory.abi,
-          data: tokenCreatedLog.data,
-          topics: tokenCreatedLog.topics,
+          eventName: "TokenCreated",
+          fromBlock: receipt.blockNumber,
+          toBlock: receipt.blockNumber,
+          strict: true,
         });
 
-        const tokenAddress = decoded.args.tokenAddress as `0x${string}`;
+        const tokenAddress = events[0]?.args?.tokenAddress ?? "0x0";
 
         console.log("Token address=", tokenAddress);
 

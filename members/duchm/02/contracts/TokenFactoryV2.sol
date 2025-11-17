@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "./Token.sol";
 
-contract TokenFactory is UUPSUpgradeable, OwnableUpgradeable {
+contract TokenFactoryV2 is UUPSUpgradeable, OwnableUpgradeable {
     uint256 tokenCount = 0;
     mapping(address => Token) public tokenMap;
     address tokenImpl;
@@ -59,7 +59,7 @@ contract TokenFactory is UUPSUpgradeable, OwnableUpgradeable {
     }
 
     function getVersion() public pure returns (uint256) {
-        return 1;
+        return 2;
     }
 
     function _authorizeUpgrade(

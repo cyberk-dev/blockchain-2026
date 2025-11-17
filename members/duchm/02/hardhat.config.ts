@@ -2,11 +2,13 @@ import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import { configVariable, defineConfig } from "hardhat/config";
 import { transferTokenTask } from "./tasks/transfer-token.js";
 import { createTokenTask } from "./tasks/create-token.js";
+import { upgradeTokenFactory } from "./tasks/upgrade-token-factory.js";
 
 export default defineConfig({
   plugins: [hardhatToolboxViemPlugin],
-  tasks: [transferTokenTask, createTokenTask],
+  tasks: [transferTokenTask, createTokenTask, upgradeTokenFactory],
   solidity: {
+    npmFilesToBuild: ["@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol"],
     profiles: {
       default: {
         version: "0.8.28",

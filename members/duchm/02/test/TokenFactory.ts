@@ -28,25 +28,23 @@ describe("TokenFactory", async function () {
     const receipt = await publicClient.waitForTransactionReceipt({ hash: tx });
     assert.equal(receipt.status, "success");
 
-    const logs = await publicClient.getLogs({
+    const events = await publicClient.getContractEvents({
       address: factory.address,
-      event: factory.abi.find((abi) => abi.name === "TokenCreated"),
+      abi: factory.abi,
+      eventName: "TokenCreated",
       fromBlock: receipt.blockNumber,
       toBlock: receipt.blockNumber,
+      strict: true,
     });
 
-    assert.equal(logs.length, 1);
+    assert.equal(events[0].args.name, name);
+    assert.equal(events[0].args.symbol, symbol);
 
-    const event = decodeEventLog({
-      abi: factory.abi,
-      data: logs[0].data,
-      topics: logs[0].topics,
-    });
+    const token = await viem.getContractAt(
+      "Token",
+      events[0].args.tokenAddress
+    );
 
-    assert.equal(event.args.name, name);
-    assert.equal(event.args.symbol, symbol);
-
-    const token = await viem.getContractAt("Token", event.args.tokenAddress);
     assert.equal(
       (await token.read.owner()).toLowerCase(),
       creator.account.address.toLowerCase()

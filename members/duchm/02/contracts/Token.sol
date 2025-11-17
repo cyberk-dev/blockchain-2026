@@ -1,19 +1,27 @@
 pragma solidity ^0.8.28;
 
-// import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-// import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-// import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+contract Token is ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
-contract Token is ERC20, Ownable {
-    constructor(string memory name, string memory symbol, uint256 totalSupply, address owner) ERC20(name, symbol) Ownable(owner) {
+    function initialize(
+        string memory name,
+        string memory symbol,
+        uint256 totalSupply,
+        address owner
+    ) public initializer {
+        __ERC20_init(name, symbol);
+        __Ownable_init(owner);
         _mint(owner, totalSupply);
     }
 
-    // function initialize(string memory name, string memory symbol, uint256 totalSupply) public initializer {
-    //     __ERC20_init(name, symbol);
-    //     _mint(msg.sender, totalSupply);
-    // }
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyOwner {}
 }
