@@ -1,0 +1,9 @@
+{
+    "TokenModule": {
+        "Name": "CBK",
+        "Symbol": "CBK",
+        "Decimals": 18,
+        "TotalSupply": 1000000000000000000000000000
+    }
+   
+}

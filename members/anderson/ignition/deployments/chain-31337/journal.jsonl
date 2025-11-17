@@ -1,3 +1,0 @@
-
-{"chainId":31337,"type":"DEPLOYMENT_INITIALIZE"}
-{"artifactId":"AndersonModule#Anderson","constructorArgs":[null],"contractName":"Anderson","dependencies":[],"from":"0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266","futureId":"AndersonModule#Anderson","futureType":"NAMED_ARTIFACT_CONTRACT_DEPLOYMENT","libraries":{},"strategy":"basic","strategyConfig":{},"type":"DEPLOYMENT_EXECUTION_STATE_INITIALIZE","value":{"_kind":"bigint","value":"0"}}
