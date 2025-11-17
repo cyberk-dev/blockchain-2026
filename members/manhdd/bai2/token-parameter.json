@@ -1,0 +1,7 @@
+{
+  "TokenModule": {
+    "name": "MDCoin",
+    "symbol": "MDC",
+    "initialSupply": "10000000000000000000000000000"
+  }
+}
