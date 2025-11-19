@@ -6,8 +6,9 @@ export default buildModule("TokenModule", (m) => {
   const name = m.getParameter("name");
   const symbol = m.getParameter("symbol");
   const initialSupply = m.getParameter("initialSupply");
+  const endTime = m.getParameter("endTime");
 
-  const token = m.contract("Token", [name, symbol, initialSupply]);
+  const token = m.contract("Token", [name, symbol, initialSupply, endTime]);
 
   return { token };
 });
