@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parseUnits } from "viem";
+import { formatUnits, parseUnits } from "viem";
 
 import { network } from "hardhat";
 import TokenModule from "../ignition/modules/Token.js";
@@ -18,7 +18,7 @@ async function deploy(connection: NetworkConnection) {
       TokenModule: {
         name: "Cyberk",
         symbol: "CBK",
-        initialSupply: parseUnits("100000000", 18),
+        initialSupply: parseUnits("0", 18),
         endTime: endTime,
       },
     }
@@ -36,31 +36,73 @@ describe("Token", async function () {
     console.log("token", token.address);
   });
 
-  it("Buy token", async function () {
+  it("Buy token with correct price should succeed", async function () {
     const { networkHelpers } = await network.connect();
-    const { token } = await networkHelpers.loadFixture(deploy.bind(networkHelpers));
+    const { token, viem } = await networkHelpers.loadFixture(deploy.bind(networkHelpers));
 
-    await token.write.buyToken([1000000000000000000n], {
-      value: 100000000000000000n, // 0.1 eth
+    const [buyer] = await viem.getWalletClients();
+    const amount = parseUnits("1", 18); // 1 token
+    const price = await token.read.getBuyPrice([amount]);
+
+    console.log(`Buying ${formatUnits(amount, 18)} tokens for ${formatUnits(price, 18)} ETH`);
+
+    // Buy with exact price - should succeed
+    await token.write.buyToken([amount], {
+      value: price,
+      account: buyer.account,
     });
+
+    // Verify token balance
+    const balance = await token.read.balanceOf([buyer.account.address]);
+    assert.equal(balance, amount, "Token balance should equal purchased amount");
+  });
+
+  it("Buy token with insufficient price should fail", async function () {
+    const { networkHelpers } = await network.connect();
+    const { token, viem } = await networkHelpers.loadFixture(deploy.bind(networkHelpers));
+
+    const [buyer] = await viem.getWalletClients();
+    const amount = parseUnits("1", 18); // 1 token
+    const price = await token.read.getBuyPrice([amount]);
+    const insufficientPrice = price - 1n; // Price minus 1 wei
+
+    console.log(`Attempting to buy ${formatUnits(amount, 18)} tokens with ${formatUnits(insufficientPrice, 18)} ETH (insufficient)`);
+
+    // Buy with insufficient price - should fail
+    try {
+      await token.write.buyToken([amount], {
+        value: insufficientPrice,
+        account: buyer.account,
+      });
+      assert.fail("buyToken should have reverted with InsufficientFunds error");
+    } catch (error: any) {
+      assert.ok(
+        error.message.includes("InsufficientFunds") ||
+        error.message.includes("revert"),
+        `Expected InsufficientFunds error, got: ${error.message}`
+      );
+    }
   });
 
   it("Cannot buy token after endTime", async function () {
     const { networkHelpers } = await network.connect();
 
-    const { token, } = await networkHelpers.loadFixture(deploy.bind(networkHelpers));
+    const { token, viem } = await networkHelpers.loadFixture(deploy.bind(networkHelpers));
 
-
+    const [buyer] = await viem.getWalletClients();
     const contractEndTime = await token.read.endTime();
-
 
     // Time travel to after endTime
     await networkHelpers.time.increaseTo(contractEndTime + 1n);
 
+    const amount = parseUnits("1", 18);
+    const price = await token.read.getBuyPrice([amount]);
+
     // Try to buy token after endTime - should fail
     try {
-      await token.write.buyToken([1000000000000000000n], {
-        value: 100000000000000000n, // 0.1 eth
+      await token.write.buyToken([amount], {
+        value: price,
+        account: buyer.account,
       });
       assert.fail("buyToken should have reverted with EndTimeReached error");
     } catch (error: any) {
