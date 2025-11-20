@@ -13,6 +13,8 @@ contract EventEmitter is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint256 initialSupply
     );
 
+    uint256 public x;
+    uint256 public y;
     mapping(address => bool) public publishers;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
