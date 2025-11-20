@@ -22,7 +22,7 @@ contract BondingCurveToken is ERC20, Ownable {
     ) ERC20(name_, symbol_) Ownable(msg.sender) {
         a = a_;
         b = b_;
-        _mint(msg.sender, initialSupply_);
+        _mint(msg.sender, initialSupply_ * 10 ** decimals());
     }
 
     function getPrice(uint256 amount) public view returns (uint256) {
