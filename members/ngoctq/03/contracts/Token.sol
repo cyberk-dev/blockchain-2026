@@ -13,7 +13,7 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
     uint256 public endTime; // Timestamp when token sale ends
     uint256 public slope; // 'a' in formula y = ax + b (price increase rate)
     uint256 public basePrice; // 'b' in formula y = ax + b (starting price)
-    uint256 public totalSold; // Total number of tokens sold (in wei units, with decimals)
+    uint256 public initialSupply; // Initial supply minted to owner (to calculate tokens sold)
 
     error InsufficientFunds();
     error InvalidAmount();
@@ -44,8 +44,8 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
         // Keep old price variable for backward compatibility
         price = basePrice;
         
-        // Initialize totalSold to 0
-        totalSold = 0;
+        // Store initial supply to calculate tokens sold later
+        initialSupply = _initialSupply;
         
         _mint(msg.sender, _initialSupply);
     }
@@ -66,43 +66,50 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Calculate the total cost to buy N tokens with progressive pricing
+     * @notice Calculate the total cost to buy m tokens with progressive pricing
      * @dev Uses arithmetic progression formula from WolframAlpha:
-     *      Sum[a*x + b, {x, S+1, S+N}] = (N * (2*a*S + a*(N+1) + 2*b)) / 2
+     *      Sum[a*x + b, {x, s+1, s+m}] = (1/2) * a * m * (m + 2*s + 1) + b * m
+     *      
+     *      Where:
+     *      - m = number of tokens to buy (in token units)
+     *      - s = tokens already sold (in token units) = totalSupply - initialSupply
+     *      - a = slope (price increase per token, in wei)
+     *      - b = basePrice (starting price per token, in wei)
+     *      
+     *      Since _amount and totalSupply are in wei, we convert:
+     *      - m = _amount / 10^18
+     *      - s = (totalSupply() - initialSupply) / 10^18
+     *      
+     *      To avoid precision loss, we use FullMath.mulDiv for division operations.
+     *      
      * @param _amount Number of tokens to buy (in wei units with decimals)
      * @return Total cost in wei
      */
     function calculateCost(uint256 _amount) public view returns (uint256) {
         if (_amount == 0) return 0;
         
-        // S = totalSold (current number of tokens sold)
-        // N = _amount (number of tokens to buy)
-        // a = slope
-        // b = basePrice
+        uint256 DECIMALS = 10**decimals();
         
-        // Convert to token units (divide by 10^decimals) for calculation
-        uint256 S = totalSold / (10**decimals());
-        uint256 N = _amount / (10**decimals());
+        // Formula: Sum = (1/2) * a * m * (m + 2*s + 1) + b * m
+        // Rearranged: Sum = m * [(1/2) * a * (m + 2*s + 1) + b]
+        //                 = (_amount / DECIMALS) * [(1/2) * a * (_amount/DECIMALS + 2*s/DECIMALS + 1) + b]
         
-        // Formula: Sum = (N * (2*a*S + a*(N+1) + 2*b)) / 2
+        // Calculate tokens already sold: s = totalSupply() - initialSupply
+        uint256 tokensSold = totalSupply() - initialSupply;
         
-        // Calculate: 2*a*S
-        uint256 twoAS = 2 * slope * S;
+        // Calculate: m + 2*s + 1 = _amount/DECIMALS + 2*tokensSold/DECIMALS + 1
+        // To avoid precision loss: (m + 2*s + 1) * DECIMALS = _amount + 2*tokensSold + DECIMALS
+        uint256 mPlus2sPlus1TimesDecimals = _amount + 2 * tokensSold + DECIMALS;
         
-        // Calculate: a*(N+1)
-        uint256 aNPlus1 = slope * (N + 1);
+        // Calculate: (1/2) * a * (m + 2*s + 1) = a * (m + 2*s + 1) / 2
+        //          = a * mPlus2sPlus1TimesDecimals / (2 * DECIMALS)
+        uint256 slopeTerm = slope.mulDiv(mPlus2sPlus1TimesDecimals, 2 * DECIMALS);
         
-        // Calculate: 2*b
-        uint256 twoB = 2 * basePrice;
+        // Calculate: (1/2) * a * (m + 2*s + 1) + b
+        uint256 pricePerToken = slopeTerm + basePrice;
         
-        // Calculate: 2*a*S + a*(N+1) + 2*b
-        uint256 innerSum = twoAS + aNPlus1 + twoB;
-        
-        // Calculate: N * (2*a*S + a*(N+1) + 2*b)
-        uint256 totalBeforeDiv = N * innerSum;
-        
-        // Divide by 2 to get final result
-        uint256 totalCost = totalBeforeDiv / 2;
+        // Calculate: m * pricePerToken = (_amount / DECIMALS) * pricePerToken
+        uint256 totalCost = _amount.mulDiv(pricePerToken, DECIMALS);
         
         return totalCost;
     }
@@ -115,9 +122,6 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
         
         // Check if the sent value is sufficient
         if (msg.value < totalCost) revert InsufficientFunds();
-        
-        // Update totalSold before minting
-        totalSold += _amount;
         
         // Mint tokens to buyer
         _mint(msg.sender, _amount);

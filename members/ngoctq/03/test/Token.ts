@@ -258,11 +258,13 @@ describe("Token", async function () {
 
     const basePrice = await token.read.basePrice();
     const slope = await token.read.slope();
-    const totalSold = await token.read.totalSold();
+    const initialSupply = await token.read.initialSupply();
+    const totalSupply = await token.read.totalSupply();
+    const tokensSold = totalSupply - initialSupply;
 
     assert.equal(basePrice, parseUnits("0.1", 18), "basePrice should be 0.1 ETH");
     assert.equal(slope, 0n, "slope should be 0 by default");
-    assert.equal(totalSold, 0n, "totalSold should be 0 initially");
+    assert.equal(tokensSold, 0n, "tokens sold should be 0 initially");
   });
 
   it("Should allow owner to set pricing parameters", async function () {
@@ -302,23 +304,26 @@ describe("Token", async function () {
     assert.equal(cost10, parseUnits("1.00055", 18), "Cost for 10 tokens should be 1.00055 ETH");
   });
 
-  it("Should update totalSold after purchase", async function () {
+  it("Should update tokens sold after purchase", async function () {
     const { networkHelpers, viem } = await network.connect();
     const { token } = await networkHelpers.loadFixture(deploy.bind(networkHelpers));
     const [, buyer] = await viem.getWalletClients();
 
     const amountToBuy = parseUnits("5", 18);
     
-    const totalSoldBefore = await token.read.totalSold();
-    assert.equal(totalSoldBefore, 0n, "totalSold should be 0 initially");
+    const initialSupply = await token.read.initialSupply();
+    const totalSupplyBefore = await token.read.totalSupply();
+    const tokensSoldBefore = totalSupplyBefore - initialSupply;
+    assert.equal(tokensSoldBefore, 0n, "tokens sold should be 0 initially");
 
     await token.write.buyToken([amountToBuy], {
       value: parseUnits("0.5", 18),
       account: buyer.account,
     });
 
-    const totalSoldAfter = await token.read.totalSold();
-    assert.equal(totalSoldAfter, amountToBuy, "totalSold should be updated after purchase");
+    const totalSupplyAfter = await token.read.totalSupply();
+    const tokensSoldAfter = totalSupplyAfter - initialSupply;
+    assert.equal(tokensSoldAfter, amountToBuy, "tokens sold should be updated after purchase");
   });
 
   it("Should handle progressive pricing correctly across multiple purchases", async function () {
@@ -339,8 +344,11 @@ describe("Token", async function () {
       account: buyer.account,
     });
 
-    const totalSoldAfterFirst = await token.read.totalSold();
-    assert.equal(totalSoldAfterFirst, parseUnits("5", 18), "totalSold should be 5 after first purchase");
+    const initialSupply = await token.read.initialSupply();
+    
+    const totalSupplyAfterFirst = await token.read.totalSupply();
+    const tokensSoldAfterFirst = totalSupplyAfterFirst - initialSupply;
+    assert.equal(tokensSoldAfterFirst, parseUnits("5", 18), "tokens sold should be 5 after first purchase");
 
     // Second purchase: 3 tokens
     // S = 5, N = 3
@@ -351,8 +359,9 @@ describe("Token", async function () {
       account: buyer.account,
     });
 
-    const totalSoldAfterSecond = await token.read.totalSold();
-    assert.equal(totalSoldAfterSecond, parseUnits("8", 18), "totalSold should be 8 after second purchase");
+    const totalSupplyAfterSecond = await token.read.totalSupply();
+    const tokensSoldAfterSecond = totalSupplyAfterSecond - initialSupply;
+    assert.equal(tokensSoldAfterSecond, parseUnits("8", 18), "tokens sold should be 8 after second purchase");
 
     const finalBalance = await token.read.balanceOf([buyer.account.address]);
     assert.equal(finalBalance, parseUnits("8", 18), "Buyer should have 8 tokens");
@@ -405,8 +414,11 @@ describe("Token", async function () {
       account: buyer.account,
     });
 
-    const totalSoldAfterFirst = await token.read.totalSold();
-    assert.equal(totalSoldAfterFirst, parseUnits("1", 18), "totalSold should be 1 after first purchase");
+    const initialSupply = await token.read.initialSupply();
+    
+    const totalSupplyAfterFirst = await token.read.totalSupply();
+    const tokensSoldAfterFirst = totalSupplyAfterFirst - initialSupply;
+    assert.equal(tokensSoldAfterFirst, parseUnits("1", 18), "tokens sold should be 1 after first purchase");
 
     // Second purchase: 10 tokens (after already buying 1)
     // S = 1, N = 10, a = 0.00001, b = 0.1
@@ -421,10 +433,121 @@ describe("Token", async function () {
       account: buyer.account,
     });
 
-    const totalSoldAfterSecond = await token.read.totalSold();
-    assert.equal(totalSoldAfterSecond, parseUnits("11", 18), "totalSold should be 11 after second purchase");
+    const totalSupplyAfterSecond = await token.read.totalSupply();
+    const tokensSoldAfterSecond = totalSupplyAfterSecond - initialSupply;
+    assert.equal(tokensSoldAfterSecond, parseUnits("11", 18), "tokens sold should be 11 after second purchase");
 
     const finalBalance = await token.read.balanceOf([buyer.account.address]);
     assert.equal(finalBalance, parseUnits("11", 18), "Buyer should have 11 tokens total");
+  });
+
+  it("Should calculate correct cost for fractional token amounts", async function () {
+    const { networkHelpers, viem } = await network.connect();
+    const { token } = await networkHelpers.loadFixture(deploy.bind(networkHelpers));
+    const [, buyer] = await viem.getWalletClients();
+
+    // Set slope to enable progressive pricing
+    const slope = parseUnits("0.00001", 18);
+    await token.write.setPricingParameters([slope, parseUnits("0.1", 18)]);
+
+    // Test 1: Buy 0.5 tokens (5 * 10^17 wei)
+    // S = 0, N = 0.5
+    // Sum = (0.5 * (0 + 0.00001*1.5 + 0.2)) / 2 = 0.050003750 ETH
+    const halfToken = parseUnits("0.5", 18);
+    const costHalf = await token.read.calculateCost([halfToken]);
+    const expectedHalf = parseUnits("0.05000375", 18);
+    assert.equal(costHalf, expectedHalf, "Cost for 0.5 tokens should be 0.05000375 ETH");
+
+    await token.write.buyToken([halfToken], {
+      value: costHalf,
+      account: buyer.account,
+    });
+
+    // Test 2: Buy 0.1 tokens after buying 0.5 tokens
+    // S = 0.5, N = 0.1
+    // Sum = (0.1 * (2*0.00001*0.5 + 0.00001*1.1 + 0.2)) / 2
+    const pointOneToken = parseUnits("0.1", 18);
+    const costPointOne = await token.read.calculateCost([pointOneToken]);
+    
+    await token.write.buyToken([pointOneToken], {
+      value: costPointOne,
+      account: buyer.account,
+    });
+
+    const balance = await token.read.balanceOf([buyer.account.address]);
+    assert.equal(balance, parseUnits("0.6", 18), "Buyer should have 0.6 tokens total");
+  });
+
+  it("Should handle very small token amounts (1 wei)", async function () {
+    const { networkHelpers, viem } = await network.connect();
+    const { token } = await networkHelpers.loadFixture(deploy.bind(networkHelpers));
+    const [, buyer] = await viem.getWalletClients();
+
+    // Test with slope = 0 first (simpler case)
+    // With slope = 0, cost = amount * basePrice / 10^18
+    // For 1 wei: cost = 1 * 0.1 ETH / 10^18 = 0.1 / 10^18 ETH
+    const oneWei = 1n;
+    const costNoSlope = await token.read.calculateCost([oneWei]);
+    
+    // Due to integer division, cost for 1 wei will be 0
+    // This is expected behavior with integer arithmetic
+    assert.equal(costNoSlope, 0n, "Cost for 1 wei token with slope=0 should be 0 (precision limit)");
+    
+    // Test with a larger amount that will have non-zero cost
+    const thousandWei = 1000n;
+    const costThousand = await token.read.calculateCost([thousandWei]);
+    assert.ok(costThousand > 0n, "Cost for 1000 wei tokens should be greater than 0");
+    
+    // Should be able to buy with calculated cost
+    await token.write.buyToken([thousandWei], {
+      value: costThousand,
+      account: buyer.account,
+    });
+
+    const balance = await token.read.balanceOf([buyer.account.address]);
+    assert.equal(balance, thousandWei, "Buyer should have 1000 wei of tokens");
+  });
+
+  it("Should calculate correct cost for various fractional amounts with slope=0", async function () {
+    const { networkHelpers, viem } = await network.connect();
+    const { token } = await networkHelpers.loadFixture(deploy.bind(networkHelpers));
+    const [, buyer] = await viem.getWalletClients();
+
+    // With slope = 0, cost should be linear: cost = amount * basePrice / 10^18
+    
+    // Test 0.5 tokens
+    const halfToken = parseUnits("0.5", 18);
+    const costHalf = await token.read.calculateCost([halfToken]);
+    assert.equal(costHalf, parseUnits("0.05", 18), "Cost for 0.5 tokens should be 0.05 ETH");
+
+    // Test 0.1 tokens
+    const pointOneToken = parseUnits("0.1", 18);
+    const costPointOne = await token.read.calculateCost([pointOneToken]);
+    assert.equal(costPointOne, parseUnits("0.01", 18), "Cost for 0.1 tokens should be 0.01 ETH");
+
+    // Test 0.001 tokens
+    const smallAmount = parseUnits("0.001", 18);
+    const costSmall = await token.read.calculateCost([smallAmount]);
+    assert.equal(costSmall, parseUnits("0.0001", 18), "Cost for 0.001 tokens should be 0.0001 ETH");
+
+    // Buy all amounts
+    await token.write.buyToken([halfToken], {
+      value: costHalf,
+      account: buyer.account,
+    });
+
+    await token.write.buyToken([pointOneToken], {
+      value: costPointOne,
+      account: buyer.account,
+    });
+
+    await token.write.buyToken([smallAmount], {
+      value: costSmall,
+      account: buyer.account,
+    });
+
+    const totalAmount = halfToken + pointOneToken + smallAmount;
+    const balance = await token.read.balanceOf([buyer.account.address]);
+    assert.equal(balance, totalAmount, "Buyer should have correct total amount");
   });
 });
