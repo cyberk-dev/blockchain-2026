@@ -40,4 +40,16 @@ contract TokenTest is Test {
         assertEq(token.balanceOf(owner), INITIAL_SUPPLY - amount);
         assertEq(token.balanceOf(user), amount);
     }
+
+    function test_buyToken() public
+    {
+        uint256 buyAmount = 50 * 10 ** DECIMALS;
+        uint256 etherSent = 5 ether; // 0.1 ether per token, so 5 ether buys 50 tokens
+
+        vm.prank(user);
+        token.buyTokens{value: etherSent}(buyAmount);
+
+        assertEq(token.balanceOf(user), buyAmount);
+        assertEq(token.totalSupply(), INITIAL_SUPPLY + buyAmount);
+    }
 }
