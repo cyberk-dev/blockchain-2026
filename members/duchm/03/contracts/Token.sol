@@ -8,10 +8,10 @@ import "./FullMath.sol";
 contract Token is ERC20, Ownable, ReentrancyGuard {
     using FullMath for uint256;
 
-    uint256 basePrice;
-    uint256 slope;
-    uint256 endTime;
-    uint256 tokenSold;
+    uint256 public basePrice;
+    uint256 public slope;
+    uint256 public endTime;
+    uint256 public tokenSold;
 
     event TokenBought(address buyer, uint256 amount, uint256 cost);
     event PriceUpdated(uint256 newPrice);
@@ -73,7 +73,7 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
         return 10 ** decimals();
     }
 
-    function getTokenSold() external view returns (uint256) {
-        return tokenSold;
+    function getCost(uint256 amount) public view returns (uint256) {
+        return calculateCost(amount);
     }
 }

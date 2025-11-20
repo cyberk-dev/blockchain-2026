@@ -12,7 +12,7 @@ describe("BondingCurveToken", async function () {
   const TOKEN_SYMBOL = "TBT";
   const A = 1000n; // Price increment per token (in wei)
   const B = 1000000n; // Base price (in wei)
-  const INITIAL_SUPPLY = 100n; // 100 tokens (raw amount, contract will mint as-is)
+  const INITIAL_SUPPLY = 100n; // 100 tokens (raw amount, contract will mint with decimals)
 
   describe("Deployment", function () {
     it("Should deploy with correct name and symbol", async function () {
@@ -51,10 +51,11 @@ describe("BondingCurveToken", async function () {
         INITIAL_SUPPLY,
       ]);
 
-      // Contract mints initialSupply directly without decimals adjustment
+      // Contract mints initialSupply with decimals adjustment
+      const decimals = await token.read.decimals();
       const balance = await token.read.balanceOf([deployer.account.address]);
 
-      assert.equal(balance, INITIAL_SUPPLY);
+      assert.equal(balance, INITIAL_SUPPLY * 10n ** BigInt(decimals));
     });
 
     it("Should initialize totalSold to 0", async function () {
