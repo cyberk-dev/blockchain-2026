@@ -1,0 +1,7 @@
+{
+  "SimpleTokenModule": {
+    "name": "AWS Token",
+    "symbol": "AWS",
+    "initialSupply": "10000000000000000000000000000"
+  }
+}

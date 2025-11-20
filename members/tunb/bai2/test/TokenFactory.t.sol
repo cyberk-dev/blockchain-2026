@@ -23,7 +23,7 @@ contract TokenFactoryTest is Test {
         uint256 totalSupplyWei = totalSupplyHuman * 10 ** DECIMALS;
 
         vm.expectEmit(true, false, false, true);
-        emit TokenFactory.TokenCreated(address(0), NAME, SYMBOL, totalSupplyWei);
+        emit TokenFactory.TokenCreated(NAME, SYMBOL, totalSupplyWei);
 
         vm.prank(creator);
         address tokenAddr = factory.createToken(NAME, SYMBOL, totalSupplyWei);

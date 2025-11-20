@@ -1,0 +1,7 @@
+{
+  "BondingCurveTokenModule": {
+    "a": "1000",
+    "b": "1000000",
+    "initialSupply": "1000000000000000000000000"
+  }
+}
