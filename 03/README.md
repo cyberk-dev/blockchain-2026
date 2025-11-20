@@ -33,7 +33,7 @@ The price of the token will not be fixed but will increase gradually according t
 -   Use the `FullMath.sol` library to avoid overflow/underflow errors when performing calculations, especially when multiplying large numbers.
 -   **Hint for the general formula**: [WolframAlpha](https://www.wolframalpha.com/input?i2d=true&i=Sum%5Bax+%2B+b%2C%7Bx%2Cs%2B1%2Cs%2Bm%7D%5D)
 
-## Goals to achieve
+## Goals to achievesa
 
 -   Understand and apply `modifier` in Solidity.
 -   Work with `block.timestamp`.
