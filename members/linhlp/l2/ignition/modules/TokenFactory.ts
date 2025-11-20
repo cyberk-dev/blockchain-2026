@@ -1,9 +1,11 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import EventEmitterModule from "./EventEmitter.js";
+import TokenModule from "./Token.js";
 
 export default buildModule("TokenFactoryModule", (m) => {
   const owner = m.getAccount(0);
   const { eventEmitter } = m.useModule(EventEmitterModule);
+  const { token } = m.useModule(TokenModule);
 
   const factoryImpl = m.contract("TokenFactory", [], {
     id: "TokenFactoryImpl",
@@ -21,5 +23,5 @@ export default buildModule("TokenFactoryModule", (m) => {
   const factoryProxy = m.contractAt("TokenFactory", factory);
   m.call(eventEmitter, "registerPublisher", [factoryProxy]);
 
-  return { factory: factoryProxy, eventEmitter };
+  return { factory: factoryProxy, eventEmitter, token };
 });

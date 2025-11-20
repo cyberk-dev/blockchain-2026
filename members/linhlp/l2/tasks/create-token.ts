@@ -39,10 +39,21 @@ export const createTokenTask = task(
     type: ArgumentType.STRING,
     defaultValue: "",
   })
+  .addOption({
+    name: "price",
+    description: "Initial token supply (in whole tokens, e.g. 1000000)",
+    type: ArgumentType.STRING,
+    defaultValue: "0.001",
+  })
   .setAction(async () => {
     return {
       default: async (
-        args: { name?: string; symbol?: string; supply?: string },
+        args: {
+          name?: string;
+          symbol?: string;
+          supply?: string;
+          price?: string;
+        },
         hre: HardhatRuntimeEnvironment
       ) => {
         if (!args.name || !args.symbol) {
@@ -58,11 +69,13 @@ export const createTokenTask = task(
 
         const supply = args.supply || "1000000";
         const initialSupply = parseUnits(supply, 18);
+        const price = args.price || 0.001;
 
         const tx = await factory.write.createToken([
           args.name!,
           args.symbol!,
           initialSupply,
+          price,
         ]);
 
         console.log("transfer tx=", tx);
