@@ -20,8 +20,57 @@ describe("Token", async function () {
     });
     tokenAddress = token.address;
     assert.ok(token.address, "Token should have an address");
-    const name = await token.read.name(); // Corrected: Await the name() call
+    const name = await token.read.name();
     assert.equal(name, "Duchm", "Token should have correct name");
+  });
+
+  it("Should implement progressive pricing correctly", async function () {
+    const [, buyer1, buyer2] = await viem.getWalletClients();
+
+    const token = await viem.getContractAt("Token", tokenAddress);
+
+    const initialTokenSold = await token.read.getTokenSold();
+    assert.equal(initialTokenSold, 0n, "Initial tokenSold should be 0");
+
+    const firstAmount = 10n;
+    await token.write.buy([firstAmount], {
+      value: parseEther("2"),
+      account: buyer1.account,
+    });
+
+    let tokenSold = await token.read.getTokenSold();
+    assert.equal(
+      tokenSold,
+      initialTokenSold + firstAmount,
+      "tokenSold should be 10 after first purchase"
+    );
+
+    const buyer1Balance = await token.read.balanceOf([buyer1.account.address]);
+    assert.equal(
+      buyer1Balance,
+      firstAmount * parseUnits("1", 18),
+      "Buyer1 should have 10 tokens"
+    );
+
+    const secondAmount = 5n;
+    await token.write.buy([secondAmount], {
+      value: parseEther("2"),
+      account: buyer2.account,
+    });
+
+    tokenSold = await token.read.getTokenSold();
+    assert.equal(
+      tokenSold,
+      initialTokenSold + firstAmount + secondAmount,
+      "tokenSold should be 15 after second purchase"
+    );
+
+    const buyer2Balance = await token.read.balanceOf([buyer2.account.address]);
+    assert.equal(
+      buyer2Balance,
+      secondAmount * parseUnits("1", 18),
+      "Buyer2 should have 5 tokens"
+    );
   });
 
   it("Should have time limit for purchase", async function () {
@@ -38,7 +87,7 @@ describe("Token", async function () {
     });
 
     const tokenSold = await token.read.getTokenSold();
-    assert.equal(tokenSold, 10n, "Should have sold 10 tokens");
+    assert.equal(tokenSold, 25n, "Should have sold 25 tokens");
 
     await helpers.time.increase(3601);
 
