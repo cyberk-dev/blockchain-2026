@@ -1,9 +1,18 @@
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import { configVariable, defineConfig } from "hardhat/config";
 import { transferTokenTask } from "./tasks/transfer-token.js";
+import './plugins/type-extensions.js';
 
 export default defineConfig({
-  plugins: [hardhatToolboxViemPlugin],
+  plugins: [hardhatToolboxViemPlugin,
+    {
+      id: 'hardhat-viem-assertions-extended',
+      dependencies: () => [],
+      hookHandlers: {
+        network: () => import('./plugins/viem-test.js'),
+      },
+    },
+  ],
   tasks: [transferTokenTask],
   solidity: {
     profiles: {
