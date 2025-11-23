@@ -4,6 +4,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./FullMath.sol";
+import "./PaymentToken.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Token is ERC20, Ownable, ReentrancyGuard {
     using FullMath for uint256;
@@ -12,11 +14,11 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
     uint256 public slope;
     uint256 public endTime;
     uint256 public tokenSold;
+    IERC20 public paymentToken;
 
     event TokenBought(address buyer, uint256 amount, uint256 cost);
     event PriceUpdated(uint256 newPrice);
 
-    error InsufficientFunds();
     error InvalidAmount();
     error PurchasePeriodEnded();
 
@@ -27,13 +29,16 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
 
     constructor(
         string memory name,
-        string memory symbol
+        string memory symbol,
+        IERC20 _paymentTokenAddress,
+        uint256 _slope,
+        uint256 _basePrice
     ) ERC20(name, symbol) Ownable(msg.sender) {
         tokenSold = 0;
-        slope = 0.0001 ether;
-        basePrice = 0.1 ether;
+        slope = _slope;
+        basePrice = _basePrice;
         endTime = block.timestamp + 1 hours;
-        _mint(msg.sender, 1000000 * unit());
+        paymentToken = IERC20(_paymentTokenAddress);
     }
 
     function mint(address to, uint256 amount) public onlyOwner {
@@ -45,35 +50,29 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
         emit PriceUpdated(_price);
     }
 
-    function calculateCost(uint256 n) internal view returns (uint256) {
-        uint256 s = tokenSold;
-        uint256 b = basePrice;
-        uint256 a = slope;
-        uint256 term = 2 * s + n + 1;
-        uint256 n_times_term = n.mulDivRoundingUp(term, 1);
-        return a.mulDivRoundingUp(n_times_term, 2) + b * n;
+    function getCost(
+        uint256 s, // tokens already sold
+        uint256 m, // amount to buy
+        uint256 a, // slope
+        uint256 b // base price
+    ) public pure returns (uint256) {
+        if (m == 0) return 0;
+        return m.mulDiv(2 * s + m - 1 + 2 * b, 2 * a);
     }
 
-    function buy(uint256 amount) public payable onlyBeforeEndTime nonReentrant {
+    function buy(uint256 amount) public onlyBeforeEndTime nonReentrant {
         if (amount == 0) revert InvalidAmount();
-        uint256 totalCost = calculateCost(amount);
-        if (msg.value < totalCost) revert InsufficientFunds();
 
-        uint256 refundAmount = msg.value - totalCost;
-        if (refundAmount > 0) {
-            payable(msg.sender).transfer(refundAmount);
-        }
+        uint256 totalCost = getCost(tokenSold, amount, slope, basePrice);
+
+        paymentToken.transferFrom(msg.sender, address(this), totalCost);
 
         tokenSold += amount;
-        _mint(msg.sender, amount * unit());
+        _mint(msg.sender, amount);
         emit TokenBought(msg.sender, amount, totalCost);
     }
 
     function unit() public view returns (uint256) {
         return 10 ** decimals();
-    }
-
-    function getCost(uint256 amount) public view returns (uint256) {
-        return calculateCost(amount);
     }
 }

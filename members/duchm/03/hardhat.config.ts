@@ -1,8 +1,24 @@
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import { configVariable, defineConfig } from "hardhat/config";
+import hardhatNetworkHelpers from "@nomicfoundation/hardhat-network-helpers";
+import hardhatViemAssertions from "@nomicfoundation/hardhat-viem-assertions";
+import hardhatVerify from "@nomicfoundation/hardhat-verify";
+import "./plugins/type-extensions.js";
 
 export default defineConfig({
-  plugins: [hardhatToolboxViemPlugin],
+  plugins: [
+    hardhatToolboxViemPlugin,
+    hardhatNetworkHelpers,
+    hardhatViemAssertions,
+    // hardhatVerify,
+    {
+      id: "hardhat-viem-assertions-extended",
+      dependencies: () => [],
+      hookHandlers: {
+        network: () => import("./plugins/viem-test.js"),
+      },
+    },
+  ],
   solidity: {
     profiles: {
       default: {

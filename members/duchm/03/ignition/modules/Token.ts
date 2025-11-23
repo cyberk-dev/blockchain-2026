@@ -3,8 +3,19 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 export default buildModule("TokenModule", (m) => {
   const name = m.getParameter("name");
   const symbol = m.getParameter("symbol");
-  const token = m.contract("Token", [name, symbol], {
-    id: "Token",
+  const slope = m.getParameter("slope");
+  const basePrice = m.getParameter("basePrice");
+
+  const paymentToken = m.contract("PaymentToken", ["USD Coin", "USDC"], {
+    id: "PaymentToken",
   });
-  return { token };
+
+  const token = m.contract(
+    "Token",
+    [name, symbol, paymentToken, slope, basePrice],
+    {
+      id: "Token",
+    }
+  );
+  return { token, paymentToken };
 });

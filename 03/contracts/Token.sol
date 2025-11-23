@@ -15,10 +15,11 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
     error InsufficientFunds();
     error InvalidAmount();
 
-    constructor(string memory _name, string memory _symbol, uint256 _initialSupply) 
-      ERC20(_name, _symbol) 
-      Ownable(msg.sender)
-    {
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        uint256 _initialSupply
+    ) ERC20(_name, _symbol) Ownable(msg.sender) {
         price = 0.1 ether; // 1 * 10^17
         _mint(msg.sender, _initialSupply);
     }
@@ -29,7 +30,8 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
 
     function buyToken(uint256 _amount) external payable nonReentrant {
         if (_amount == 0) revert InvalidAmount();
-        if (msg.value.mulDivRoundingUp(10**decimals(), price) < _amount) revert InsufficientFunds();
+        if (msg.value.mulDivRoundingUp(10 ** decimals(), price) < _amount)
+            revert InsufficientFunds();
         _mint(msg.sender, _amount);
     }
 

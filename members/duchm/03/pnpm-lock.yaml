@@ -14,6 +14,9 @@ importers:
       '@openzeppelin/contracts':
         specifier: ^5.4.0
         version: 5.4.0
+      network-helpers:
+        specifier: link:@nomicfoundation/hardhat-toolbox/network-helpers
+        version: link:@nomicfoundation/hardhat-toolbox/network-helpers
     devDependencies:
       '@nomicfoundation/hardhat-ignition':
         specifier: ^3.0.5
@@ -21,9 +24,15 @@ importers:
       '@nomicfoundation/hardhat-toolbox-viem':
         specifier: ^5.0.1
         version: 5.0.1(270b796caf9489f5e3f314a65b8ffed4)
+      '@nomicfoundation/hardhat-viem-assertions':
+        specifier: ^3.0.4
+        version: 3.0.4(@nomicfoundation/hardhat-viem@3.0.1(hardhat@3.0.15)(viem@2.39.3(typescript@5.8.3)(zod@3.25.76)))(hardhat@3.0.15)(viem@2.39.3(typescript@5.8.3)(zod@3.25.76))
       '@types/node':
         specifier: ^22.19.1
         version: 22.19.1
+      chai:
+        specifier: ^6.2.1
+        version: 6.2.1
       forge-std:
         specifier: github:foundry-rs/forge-std#v1.9.4
         version: https://codeload.github.com/foundry-rs/forge-std/tar.gz/1eea5bae12ae557d589f9f0f0edae2faa47cb262
@@ -554,6 +563,10 @@ packages:
   cbor2@1.12.0:
     resolution: {integrity: sha512-3Cco8XQhi27DogSp9Ri6LYNZLi/TBY/JVnDe+mj06NkBjW/ZYOtekaEU4wZ4xcRMNrFkDv8KNtOAqHyDfz3lYg==}
     engines: {node: '>=18.7'}
+
+  chai@6.2.1:
+    resolution: {integrity: sha512-p4Z49OGG5W/WBCPSS/dH3jQ73kD6tiMmUM+bckNK6Jr5JHMG3k9bg/BvKR8lKmtVBKmOiuVaV2ws8s9oSbwysg==}
+    engines: {node: '>=18'}
 
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
@@ -1402,6 +1415,8 @@ snapshots:
   brorand@1.1.0: {}
 
   cbor2@1.12.0: {}
+
+  chai@6.2.1: {}
 
   chalk@4.1.2:
     dependencies:
