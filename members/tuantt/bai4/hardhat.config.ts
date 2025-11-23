@@ -1,7 +1,6 @@
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import hardhatVerify from "@nomicfoundation/hardhat-verify";
 import { configVariable, defineConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-viem-assertions";
 import "./plugins/type-extensions.js";
 import hardhatViemAssertions from "@nomicfoundation/hardhat-viem-assertions";
 
