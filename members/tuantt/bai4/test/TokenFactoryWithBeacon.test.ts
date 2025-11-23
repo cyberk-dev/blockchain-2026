@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { network } from "hardhat";
 import TokenFactoryWithBeaconModule from "../ignition/modules/TokenFactoryWithBeacon.js";
-import { expect } from "chai";
 
 describe("TokenFactoryWithBeacon - Full Flow", async function () {
   const { ignition, viem, provider } = await network.connect();
@@ -117,7 +116,7 @@ describe("TokenFactoryWithBeacon - Full Flow", async function () {
     const txn = await tokenContract.write.buyTokens([m, _a, _b]);
 
     assert.ok(txn, "First token purchase transaction should succeed");
-    await expect(txn).to.erc20BalancesHaveChanged(usdtAddress, [
+    await viem.assertions.erc20BalancesHaveChanged(txn, usdtContract.address, [
       { address: deployer.account.address, amount: -cost },
       { address: tokenContract.address, amount: cost },
     ]);
