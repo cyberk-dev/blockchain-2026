@@ -12,4 +12,8 @@ import {SimpleBondingCurve} from "./curves/SimpleBondingCurve.sol";
 /// @notice USDT is a token that is used to buy tokens
 contract USDT is ERC20, Ownable, ReentrancyGuard {
     constructor() ERC20("Tether", "USDT") Ownable(msg.sender) {}
+
+    function mint(address to, uint256 amount) external onlyOwner {
+        _mint(to, amount);
+    }
 }

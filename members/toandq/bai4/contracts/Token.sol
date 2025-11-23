@@ -42,7 +42,7 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
         intercept = _intercept;
     }
 
-    function buyToken(uint256 _amount) external nonReentrant notEnded {
+    function buyToken(uint256 _amount) external nonReentrant {
         if (_amount == 0) revert InvalidAmount();
         uint256 price = getBuyPrice(_amount);
 

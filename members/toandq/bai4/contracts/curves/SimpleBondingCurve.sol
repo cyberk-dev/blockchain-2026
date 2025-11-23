@@ -16,7 +16,7 @@ library SimpleBondingCurve {
         return
             amount.mulDivRoundingUp(
                 2 * slope * intercept + amount + 2 * supply + 1,
-                2 * amount
+                2 * slope
             );
     }
 }
