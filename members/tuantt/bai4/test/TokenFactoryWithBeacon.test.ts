@@ -91,6 +91,7 @@ describe("TokenFactoryWithBeacon - Full Flow", async function () {
     const tokenContract = await viem.getContractAt("Token", tokenAddress);
 
     // 2. Buy the first full token
+    // https://www.wolframalpha.com/input?i2d=true&i=Sum%5B+2+*+x+%2B+2%2C%7Bx%2C1%2C1000%7D%5D
     const s = 0n; // initial supply
     const m = 1000n; // amount to buy
     const _a = 2n; // slope
