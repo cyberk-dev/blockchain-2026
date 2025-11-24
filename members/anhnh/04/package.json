@@ -21,5 +21,9 @@
     "hardhat": "^3.0.14",
     "typescript": "~5.8.0",
     "viem": "^2.30.0"
+  },
+  "dependencies": {
+    "@nomicfoundation/hardhat-network-helpers": "^3.0.3",
+    "@nomicfoundation/hardhat-viem-assertions": "^3.0.4"
   }
 }
