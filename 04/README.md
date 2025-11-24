@@ -169,11 +169,13 @@ To activate the plugin, it must be registered in the Hardhat config:
 ```typescript
 import { defineConfig } from "hardhat/config";
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
+import hardhatViemAssertions from "@nomicfoundation/hardhat-viem-assertions";
 import './plugins/type-extensions.js'; // Import the type extensions
 
 export default defineConfig({
   plugins: [
     hardhatToolboxViemPlugin,
+    hardhatViemAssertions,
     // Register the custom plugin
     {
       id: 'hardhat-viem-assertions-extended',
