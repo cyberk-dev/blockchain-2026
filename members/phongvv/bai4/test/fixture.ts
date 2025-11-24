@@ -1,0 +1,75 @@
+import { NetworkConnection } from "hardhat/types/network";
+import TokenFactoryModule from "../ignition/modules/TokenFactory.js";
+import TokenModule from "../ignition/modules/Token.js";
+import { parseUnits } from "viem";
+
+export const baseFixture = async (connection: NetworkConnection) => {
+  const publicClient = await connection.viem.getPublicClient();
+  const { viem, networkHelpers, ignition } = connection;
+  const { time } = networkHelpers;
+  const [deployer, user1, user2] = await viem.getWalletClients();
+  const { tokenFactory } = await ignition.deploy(TokenFactoryModule);
+  return {
+    users: { deployer, user1, user2 },
+    tokenFactory,
+    viem,
+    ignition,
+    publicClient,
+    time,
+    connection,
+  };
+};
+
+export type BaseFixtureType = Awaited<ReturnType<typeof baseFixture>>;
+
+export const tokenLinearFixture = async (connection: NetworkConnection) => {
+  const publicClient = await connection.viem.getPublicClient();
+  const { viem, networkHelpers } = connection;
+  const { time } = networkHelpers;
+  const [deployer, user1, user2] = await viem.getWalletClients();
+
+  // Deploy a mock ERC20 token to use as fee token
+  const feeToken = await viem.deployContract("contracts/Token.sol:Token", [
+    "Fee Token",
+    "FEE",
+    parseUnits("10000000000", 18), // 10 billion tokens
+  ]);
+
+  // Transfer fee tokens to users for testing
+  await Promise.all(
+    [user1, user2].map(async (user) => {
+      await feeToken.write.transfer([
+        user.account.address,
+        parseUnits("1000000000", 18), // 1 billion tokens each
+      ]);
+    })
+  );
+
+  // Deploy the TokenLinear contract
+  const slope = parseUnits("1", 22);
+  const intercept = parseUnits("1", 22);
+
+  const tokenLinear = await viem.deployContract("TokenLinear", [
+    "Linear Token",
+    "LIN",
+    feeToken.address,
+    slope,
+    intercept,
+  ]);
+
+  return {
+    users: { deployer, user1, user2 },
+    tokenLinear,
+    feeToken,
+    slope,
+    intercept,
+    viem,
+    publicClient,
+    time,
+    connection,
+  };
+};
+
+export type TokenLinearFixtureType = Awaited<
+  ReturnType<typeof tokenLinearFixture>
+>;
