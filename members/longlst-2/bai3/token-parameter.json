@@ -1,0 +1,7 @@
+{
+    "TokenModule": {
+        "name": "Token",
+        "symbol": "TKN",
+        "initialSupply": "100000000"
+    }
+}
