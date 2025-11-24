@@ -1,9 +1,21 @@
 import "dotenv/config";
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
+import hardhatViemAssertions from "@nomicfoundation/hardhat-viem-assertions";
 import { defineConfig } from "hardhat/config";
+import "./plugins/type-extensions.js";
 
 export default defineConfig({
-  plugins: [hardhatToolboxViemPlugin],
+  plugins: [
+    hardhatToolboxViemPlugin,
+    hardhatViemAssertions,
+    {
+      id: "hardhat-viem-assertions-extended",
+      dependencies: () => [],
+      hookHandlers: {
+        network: () => import("./plugins/viem-test.js"),
+      },
+    },
+  ],
   solidity: {
     profiles: {
       default: {
