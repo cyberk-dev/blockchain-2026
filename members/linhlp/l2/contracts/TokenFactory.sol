@@ -27,9 +27,12 @@ contract TokenFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string memory _name,
         string memory _symbol,
         uint256 _initialSupply
+        uint256 _price
     ) public returns (address) {
         Token newToken = new Token(_name, _symbol, _initialSupply);
         address tokenAddress = address(newToken);
+
+        newToken.setPrice(_price);
 
         tokens.push(tokenAddress);
         tokenCreator[tokenAddress] = msg.sender;
