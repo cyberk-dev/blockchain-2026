@@ -1,0 +1,7 @@
+{
+  "TokenModule": {
+    "name": "Anhnh Token",
+    "symbol": "ANHT",
+    "initialSupply": "10000000000000000000000000000"
+  }
+}
