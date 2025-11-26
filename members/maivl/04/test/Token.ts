@@ -31,8 +31,10 @@ async function deploy(connection: NetworkConnection) {
 
     const tokenAddress = (deployment.token as { address: `0x${string}` }).address;
     const token = await viem.getContractAt("Token", tokenAddress);
+    const mockTokenAddress = (deployment.mockToken as { address: `0x${string}` }).address;
+    const mockToken = await viem.getContractAt("MockToken", mockTokenAddress);
 
-    return { viem, publicClient, token };
+    return { viem, publicClient, token, usdt: mockToken };
 }
 
 function manualCost(a: bigint, b: bigint, SCALE: bigint, s: bigint, m: bigint) {
@@ -84,12 +86,59 @@ describe("Token Pricing & Buying", async function () {
     });
 
     it("Purchase Execution – buyToken succeeds", async function () {
-      const { networkHelpers } = await network.connect();
-      const { token } = await networkHelpers.loadFixture(deploy);
+        const { networkHelpers } = await network.connect();
+        const { token, usdt } = await networkHelpers.loadFixture(deploy);
 
-      const amount = 5n * (10n ** 18n);
-      const cost = manualCost(1n, 12n, 10n ** 22n, 0n, amount);
-
-      await token.write.buyToken([amount], { value: cost });
+        const amount = 5n * (10n ** 18n);
+        const cost = manualCost(1n, 12n, 10n ** 22n, 0n, amount);
+        await usdt.write.approve([token.address, cost]);
+        await token.write.buyToken([amount], { value: cost });
     });
+
+    // it("Events & Balance Check", async function () {
+    //   const { networkHelpers, viem } = await network.connect();
+    //   const { token, publicClient } = await networkHelpers.loadFixture(deploy);
+
+    //   const buyer = (await viem.getWalletClients())[1]; // second account
+
+    //   const amount = 3n;
+    //   const cost = manualCost(1n, 12n, 10n ** 22n, 5n, amount);
+
+    //   const contractBalBefore = await publicClient.getBalance({
+    //     address: token.address,
+    //   });
+
+    //   const userTokenBalBefore = await token.read.balanceOf([buyer.account.address]);
+
+    //   // buy token
+    //   const hash = await token.write.buyToken([amount], {
+    //     account: buyer.account,
+    //     value: cost,
+    //   });
+
+    //   const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+    //   // ---- EVENT ----
+    //   const log = receipt.logs.find((l) => l.eventName === "TokenBought");
+    //   assert.ok(log, "TokenBought event missing");
+
+    //   assert.equal(log.args.buyer, buyer.account.address);
+    //   assert.equal(log.args.amount, amount);
+    //   assert.equal(log.args.cost, cost);
+
+    //   // ---- TOKEN BALANCE ----
+    //   const userTokenBalAfter = await token.read.balanceOf([buyer.account.address]);
+    //   assert.equal(userTokenBalAfter - userTokenBalBefore, amount);
+
+    //   // ---- CONTRACT ETH BALANCE ----
+    //   const contractBalAfter = await publicClient.getBalance({
+    //     address: token.address,
+    //   });
+
+    //   assert.equal(
+    //     contractBalAfter - contractBalBefore,
+    //     cost,
+    //     "ETH balance mismatch after purchase"
+    //   );
+    // });
 });

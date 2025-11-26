@@ -8,6 +8,7 @@ import {
     ReentrancyGuard
 } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {FullMath} from "./FullMath.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Token is ERC20, Ownable, ReentrancyGuard {
     using FullMath for uint256;
@@ -16,10 +17,12 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
     uint256 public a;
     uint256 public b;
     uint256 public scale;
+    address public paymentToken;
 
     constructor(
         string memory _name,
         string memory _symbol,
+        address _paymentToken,
         uint256 _initialSupply,
         uint256 _endTime,
         uint256 _a,
@@ -28,6 +31,7 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
     ) ERC20(_name, _symbol) Ownable(msg.sender) {
         a = _a;
         b = _b;
+        paymentToken = _paymentToken;
         scale = _scale;
         _mint(msg.sender, _initialSupply);
 
@@ -38,6 +42,8 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
     error InsufficientFunds();
     error InvalidAmount();
     error SaleEnded();
+
+    event TokenBought(address indexed buyer, uint256 amount, uint256 cost);
 
     function getCost(uint256 s, uint256 m) public view returns (uint256) {
         uint256 part1 = a * (m * s);
@@ -59,17 +65,21 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
     ) external payable saleActive nonReentrant {
         if (_amount == 0) revert InvalidAmount();
         uint256 cost = getCost(totalWeiSold, _amount);
-        if (msg.value < cost) revert InsufficientFunds();
-
+        // if (msg.value < cost) revert InsufficientFunds();
+        IERC20(paymentToken).transferFrom(msg.sender, address(this), cost);
         // Mint token
         _mint(msg.sender, _amount);
 
         totalWeiSold += _amount;
 
-        if (msg.value > cost) {
-            (bool ok, ) = payable(msg.sender).call{value: msg.value - cost}("");
-            require(ok, "Refund failed");
-        }
+        // Emit event to track the purchase
+        emit TokenBought(msg.sender, _amount, cost);
+
+        // if (msg.value > cost) {
+        //     (bool ok, ) = payable(msg.sender).call{value: msg.value - cost}("");
+        //     require(ok, "Refund failed");
+        // }
+
     }
 
     function decimals() public view override returns (uint8) {
