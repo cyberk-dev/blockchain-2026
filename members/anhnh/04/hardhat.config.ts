@@ -6,8 +6,7 @@ import { transferTokenTask } from "./tasks/transfer-token.js";
 import { createTokenTask } from "./tasks/create-token.js";
 import { listTokensTask } from "./tasks/list-tokens.js";
 import { deployFactoryTask } from "./tasks/deploy-factory.js";
-import '@nomicfoundation/hardhat-viem';
-import {  Address, GetContractReturnType, Hash } from 'viem';
+import { Address, GetContractReturnType, Hash } from 'viem';
 
 declare module '@nomicfoundation/hardhat-viem-assertions/types' {
   interface HardhatViemAssertions {
