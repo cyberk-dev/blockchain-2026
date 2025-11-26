@@ -151,7 +151,7 @@ import { Account, Address, GetContractReturnType, Hash } from 'viem';
 declare module '@nomicfoundation/hardhat-viem-assertions/types' {
   interface HardhatViemAssertions {
     erc20BalancesHaveChanged: (
-      resolvedTxHash: Promise<Hash>,
+      resolvedTxHash: Promise<Hash> | Hash,
       token: `0x${string}` | GetContractReturnType,
       changes: Array<{
         address: Address;
@@ -193,13 +193,13 @@ export default defineConfig({
 ### Usage in Tests
 
 ```typescript
-import { expect } from "chai";
+import { network } from "hardhat";
 
 // ... inside your test
-await expect(hash).to.be.confirmed;
+const { viem } = await network.connect();
 
 // Check if buyer lost 'cost' and contract gained 'cost'
-await expect(hash).to.erc20BalancesHaveChanged(usdtAddress, [
+await viem.assertions.erc20BalancesHaveChanged(hash, usdtAddress, [
   { address: buyerAddress, amount: -cost },
   { address: contractAddress, amount: cost }
 ]);
