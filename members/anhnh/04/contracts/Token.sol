@@ -48,9 +48,10 @@ contract Token is ERC20, ReentrancyGuard {
     function buyToken(uint256 _amount) external nonReentrant {
         if (_amount == 0) revert InvalidAmount();
 
-        uint256 cost = getCost(tokenSold,  _amount);
+        uint256 cost = getCost(tokenSold, _amount);
         paymentToken.transferFrom(msg.sender, address(this), cost);
         tokenSold += _amount;
         _mint(msg.sender, _amount);
+        emit TokenBought(msg.sender, _amount, cost);
     }
 }
