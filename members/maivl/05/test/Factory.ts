@@ -43,6 +43,7 @@ describe("Factory", async function () {
                 2n,
                 4n,
                 10n ** 24n,
+                feeRecipient
             ],
             {
                 value: parseUnits("0.0001", 18),
@@ -66,7 +67,7 @@ describe("Factory", async function () {
     });
     it("Insufficient fee", async function () {
         const { networkHelpers } = await network.connect();
-        const { tokenFactory, viem, mockToken, endTimeFuture, publicClient } = await networkHelpers.loadFixture(deploy.bind(networkHelpers));
+        const { tokenFactory, viem, mockToken, endTimeFuture, publicClient, feeRecipient } = await networkHelpers.loadFixture(deploy.bind(networkHelpers));
         let isInsufficient = false;
         try {
             await tokenFactory.write.createToken(
@@ -79,6 +80,7 @@ describe("Factory", async function () {
                     2n,
                     4n,
                     10n ** 24n,
+                    feeRecipient
                 ],
                 {
                     value: parseUnits("0.00001", 18),

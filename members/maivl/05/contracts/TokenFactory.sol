@@ -18,7 +18,8 @@ contract TokenFactory is AccessControlDefaultAdminRules {
         uint256 endTime,
         uint256 a,
         uint256 b,
-        uint256 scale
+        uint256 scale,
+        address feeRecipient
     );
 
     address[] public allTokens;
@@ -47,7 +48,8 @@ contract TokenFactory is AccessControlDefaultAdminRules {
         uint256 endTime,
         uint256 a,
         uint256 b,
-        uint256 scale
+        uint256 scale,
+        address feeRecipient
     ) external payable onlyRole(TOKEN_CREATOR_ROLE) returns (address) {
         require(msg.value == CREATION_FEE, "Invalid ETH amount");
 
@@ -62,7 +64,8 @@ contract TokenFactory is AccessControlDefaultAdminRules {
             endTime,
             a,
             b,
-            scale
+            scale,
+            feeRecipient
         );
 
         allTokens.push(address(token));
@@ -76,7 +79,8 @@ contract TokenFactory is AccessControlDefaultAdminRules {
             endTime,
             a,
             b,
-            scale
+            scale,
+            feeRecipient
         );
 
         return address(token);
