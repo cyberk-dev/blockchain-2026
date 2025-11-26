@@ -10,6 +10,8 @@ export default defineConfig({
       "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
       "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
       "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol",
+      "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol",
+      "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol",
       '@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol',
       '@openzeppelin/contracts/proxy/beacon/IBeacon.sol'
     ],
