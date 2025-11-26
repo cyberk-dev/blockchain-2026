@@ -76,6 +76,40 @@ describe("TokenFactory", async function () {
     )
   });
 
+  it("Should token price P3 = P1 + P2", async function () {
+    const { viem, tokenFactory, publicClient, owner } = await setup();
+    const creationFee = await tokenFactory.read.creationFee();
+    const hash = await tokenFactory.write.createToken(["Test", "TST"], { value: creationFee, account: owner.account });
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    const [log] = await publicClient.getLogs({
+      address: tokenFactory.address,
+      event: { type: 'event', name: 'TokenCreated', inputs: [{ type: 'address', name: 'token', indexed: true }, { type: 'address', name: 'owner', indexed: true }] },
+      fromBlock: receipt.blockNumber,
+      toBlock: receipt.blockNumber
+    });
+
+    const newTokenAddress = log.args.token!;
+    const token = await viem.getContractAt("Token", newTokenAddress!);
+
+    const amount1 = parseUnits("1", 18);
+    const amount10 = parseUnits("10", 18);
+    const amount11 = parseUnits("11", 18);
+
+    const a = await token.read.slope();
+    const b = await token.read.basePrice();
+
+    // https://www.wolframalpha.com/input?i2d=true&i=Sum%5BDivide%5Bx%2C1e22%5D+++%2B+12%2C%7Bx%2C1%2C1e18%7D%5D
+    const p1 = await token.read.getCost([0n, amount1, a, b]);
+    // https://www.wolframalpha.com/input?i2d=true&i=Sum%5BDivide%5Bx%2C1e22%5D+++%2B+12%2C%7Bx%2C1e18+%2B+1%2C11e18%7D%5D
+    const p2 = await token.read.getCost([amount1, amount10, a, b]);
+    // https://www.wolframalpha.com/input?i2d=true&i=Sum%5BDivide%5Bx%2C1e22%5D+++%2B+12%2C%7Bx%2C1%2C11e18%7D%5D
+    const p3 = await token.read.getCost([0n, amount11, a, b]);
+
+    console.log(p1, p2, p3)
+
+    assert.equal(p3, p2 + p1);
+  })
+
   it("Should buy tokens, split fees, and emit event", async function () {
     const { viem, tokenFactory, paymentToken, buyer1, publicClient, owner } = await setup();
     const creationFee = await tokenFactory.read.creationFee();

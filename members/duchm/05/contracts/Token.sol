@@ -64,7 +64,7 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
     ) public pure returns (uint256) {
         if (m == 0) return 0;
         // y = x/a + b
-        return m.mulDiv(2 * s + m - 1 + 2 * a * b, 2 * a);
+        return m.mulDivRoundingUp(2 * s + m - 1 + 2 * a * b, 2 * a);
     }
 
     function buy(uint256 amount) public onlyBeforeEndTime nonReentrant {
