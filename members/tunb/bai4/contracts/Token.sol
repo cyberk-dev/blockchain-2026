@@ -4,10 +4,13 @@ pragma solidity ^0.8.28;
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { FullMath } from "./FullMath.sol";
+import "hardhat/console.sol";
+import  "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract Token is ERC20, Ownable {
 
     using FullMath for uint256;
+    using SafeERC20 for ERC20;
     
     // cost (s,m) = m*(1 + 2ab + m + 2s) / (2a)
     // (b) parameters for bonding curve
@@ -16,14 +19,20 @@ contract Token is ERC20, Ownable {
     uint256 public slope;
     // (s) total sold tokens
     uint256 public totalSold;
+
+    ERC20 public usdtAddress;
     event Bought(address indexed user, uint256 amountToken, uint256 cost);
 
     error AmountZero();
     error InsufficientPayment(uint256 required, uint256 provided);
 
-  constructor(string memory name_, string memory symbol_, uint256 slope_, uint256 initialPrice_) ERC20(name_, symbol_) Ownable(msg.sender) {
+
+  constructor(string memory name_, string memory symbol_, uint256 slope_, uint256 initialPrice_, address usdtAddress_)
+    ERC20(name_, symbol_)
+    Ownable(msg.sender) {
     slope = slope_;
     initialPrice = initialPrice_;
+    usdtAddress = ERC20(usdtAddress_);
     _mint(msg.sender, 1000 * 10 ** decimals());
   }
 
@@ -42,18 +51,15 @@ contract Token is ERC20, Ownable {
     }
 
     uint256 cost = calculateCost(amountToken, totalSold);
-    if (msg.value < cost) {
-        revert InsufficientPayment(cost, msg.value);
+    uint256 usdtAlowance = usdtAddress.allowance(msg.sender, address(this));
+    if (usdtAlowance < cost) {
+        revert InsufficientPayment(cost, usdtAlowance);
     }
 
     totalSold += amountToken;
     uint256 mintAmount = amountToken * 10 ** decimals();
+    usdtAddress.safeTransferFrom(msg.sender, address(this), cost);
     _mint(msg.sender, mintAmount);
-
-    uint256 refund = msg.value - cost;
-    if (refund > 0) {
-        payable(msg.sender).transfer(refund);
-    }
 
     emit Bought(msg.sender, amountToken, cost);
   }

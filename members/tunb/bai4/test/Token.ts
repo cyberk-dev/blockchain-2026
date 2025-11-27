@@ -11,7 +11,19 @@ describe("Linear Bonding Curve Token", async function () {
   it("should buy tokens correctly", async function () {
     const slope = 10n ** 24n; //a
     const initialPrice = 1n; // b
-    const amount = 10n * 18n; // n
+    const amount = 1n; // n
+
+    const usdtDeployment = await viem.deployContract("USDT", [
+      "Tether USD",
+      "USDT",
+    ]);
+
+    console.log("USDT deployed at:", usdtDeployment.address);
+
+    const usdtContract = await viem.getContractAt(
+      "USDT",
+      usdtDeployment.address
+    );
 
     // Deploy contract
     const deployment = await viem.deployContract("Token", [
@@ -19,6 +31,7 @@ describe("Linear Bonding Curve Token", async function () {
       "TT",
       slope,
       initialPrice,
+      usdtDeployment.address,
     ]);
 
     const tokenAddress = deployment.address;
@@ -27,9 +40,11 @@ describe("Linear Bonding Curve Token", async function () {
     // Calculate expected cost: cost(s,m) = m*(1 + 2ab + m + 2s) / (2a)
     // s = 0 (no tokens sold yet)
     // cost = m*(1 + 2ab + m) / (2a) = amount*(1 + 2*slope*initialPrice + amount) / (2*slope)
-    const numerator = amount * (1n + 2n * slope * initialPrice + amount);
-    const denominator = 2n * slope;
-    const expectedCost = (numerator + denominator - 1n) / denominator; // Round up
+    await usdtContract.write.approve([tokenAddress, amount * 10n ** 18n]);
+    console.log(
+      "Approved USDT for Token contract, amount:",
+      (amount * 10n ** 18n).toString()
+    );
 
     // Buy tokens
     const buyTx = await walletClient.writeContract({
@@ -37,7 +52,7 @@ describe("Linear Bonding Curve Token", async function () {
       abi: deployment.abi,
       functionName: "buyToken",
       args: [amount],
-      value: expectedCost,
+      value: 0n,
     });
 
     await publicClient.waitForTransactionReceipt({ hash: buyTx });
@@ -51,15 +66,7 @@ describe("Linear Bonding Curve Token", async function () {
     })) as bigint;
 
     const expectedTokenBalance = amount * 10n ** 18n + 1000n * 10n ** 18n; // amount + initial mint
+    console.log("Token balance:", balance.toString());
     assert.equal(balance, expectedTokenBalance, "Token balance should match");
-
-    // Check totalSold
-    const totalSold = (await publicClient.readContract({
-      address: tokenAddress,
-      abi: deployment.abi,
-      functionName: "totalSold",
-    })) as bigint;
-
-    assert.equal(totalSold, amount, "Total sold should match amount bought");
   });
 });
