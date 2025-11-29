@@ -5,18 +5,12 @@ import parameters from "../ignition-parameters.json";
 import { ArgumentType } from "hardhat/types/arguments";
 import { parseUnits } from "viem";
 
-export const transferTokenTask = task("transfer-token", "Transfer token")
-  .addOption({
-    name: "to",
-    type: ArgumentType.STRING,
-    description: "Recipient address",
-    defaultValue: "0x4E60672a8DB169e322dF5B36599c77Bce3383998",
-  })
+export const buyTokenTask = task("buy-token", "Buy token")
   .addOption({
     name: "amount",
     type: ArgumentType.STRING,
     description:
-      'Amount of tokens to transfer (in whole units, e.g., "1" for 1 token)',
+      'Amount of tokens to buy (in whole units, e.g., "1" for 1 token)',
     defaultValue: "1",
   })
   .addOption({
@@ -32,7 +26,8 @@ export const transferTokenTask = task("transfer-token", "Transfer token")
         const connection = await hre.network.connect();
         const { ignition, viem } = connection;
         const publicClient = await viem.getPublicClient();
-        const { to, amount, tokenAddress } = _;
+
+        const { amount, tokenAddress } = _;
 
         let token;
         if (tokenAddress) {
@@ -47,14 +42,11 @@ export const transferTokenTask = task("transfer-token", "Transfer token")
 
         const amountInWei = parseUnits(amount, 18);
 
-        const tx = await token.write.transfer([
-          to as `0x${string}`,
-          amountInWei,
-        ]);
-        
-        console.log("transfer tx=", tx);
+        const tx = await token.write.buyToken([amountInWei]);
+        console.log("buy tx=", tx);
+
         await publicClient.waitForTransactionReceipt({ hash: tx });
-        console.log("transfer success");
+        console.log("buy success");
       },
     };
   })
