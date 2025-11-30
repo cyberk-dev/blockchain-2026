@@ -1,9 +1,11 @@
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import hardhatVerify from "@nomicfoundation/hardhat-verify";
-import { configVariable, defineConfig } from "hardhat/config";
+import { defineConfig } from "hardhat/config";
 import "./plugins/type-extensions.js";
 import hardhatViemAssertions from "@nomicfoundation/hardhat-viem-assertions";
 import "dotenv/config";
+import { createTokenTask } from "./tasks/create-token.js";
+import { buyTokenTask } from "./tasks/buy-token.js"; 
 
 export default defineConfig({
   plugins: [
@@ -18,6 +20,7 @@ export default defineConfig({
       },
     },
   ],
+  tasks: [createTokenTask, buyTokenTask],
   solidity: {
     profiles: {
       default: {
