@@ -14,6 +14,11 @@ contract Token is
     OwnableUpgradeable,
     UUPSUpgradeable
 {
+    error InsufficientFunds();
+    error AmountCannotBeZero();
+
+    event TokenBought(address indexed buyer, uint256 amount, uint256 cost);
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -30,6 +35,17 @@ contract Token is
 
     function mint(address to, uint256 amount) public onlyOwner {
         _mint(to, amount);
+    }
+
+    function buyToken(uint256 _amount) external payable {
+        if (_amount == 0) revert AmountCannotBeZero();
+        uint256 cost = _amount * 0.000000000001 ether;
+        if (msg.value < cost) revert InsufficientFunds();
+        if (msg.value > cost) {
+            payable(msg.sender).transfer(msg.value - cost);
+        }
+        _mint(msg.sender, _amount);
+        emit TokenBought(msg.sender, _amount, cost);
     }
 
     function _authorizeUpgrade(
