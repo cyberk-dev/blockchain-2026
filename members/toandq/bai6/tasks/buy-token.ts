@@ -11,7 +11,7 @@ export const buyTokenTask = task('buy-token', 'Buy tokens by sending ETH')
     name: 'token',
     description: 'The token contract address',
     type: ArgumentType.STRING,
-    defaultValue: '',
+    defaultValue: '0xB6609d90CCF84341348d8773C00722Da04968563',
   })
   .addOption({
     name: 'amount',
@@ -65,10 +65,10 @@ export const buyTokenTask = task('buy-token', 'Buy tokens by sending ETH')
         }
 
         // Check token balance before buying
-        const balanceBefore = await tokenContract.read.balanceOf([
-          buyer.account.address,
-        ]);
-        console.log(`Token balance before buying: ${balanceBefore}`);
+        // const balanceBefore = await tokenContract.read.balanceOf([
+        //   buyer.account.address,
+        // ]);
+        // console.log(`Token balance before buying: ${balanceBefore}`);
 
         // Buy tokens
         console.log(`\nBuying tokens...`);
@@ -86,11 +86,11 @@ export const buyTokenTask = task('buy-token', 'Buy tokens by sending ETH')
         console.log('✅ Tokens bought successfully!');
 
         // Check token balance after buying
-        const balanceAfter = await tokenContract.read.balanceOf([
-          buyer.account.address,
-        ]);
-        console.log(`\nToken balance after buying: ${balanceAfter}`);
-        console.log(`Tokens received: ${balanceAfter - balanceBefore}`);
+        // const balanceAfter = await tokenContract.read.balanceOf([
+        //   buyer.account.address,
+        // ]);
+        // console.log(`\nToken balance after buying: ${balanceAfter}`);
+        // console.log(`Tokens received: ${balanceAfter - balanceBefore}`);
 
         // Parse the TokenBought event
         const eventAbi = [
@@ -125,8 +125,8 @@ export const buyTokenTask = task('buy-token', 'Buy tokens by sending ETH')
           txHash: buyTx,
           tokenAmount,
           cost,
-          balanceBefore,
-          balanceAfter,
+          // balanceBefore,
+          // balanceAfter,
         };
       },
     });
