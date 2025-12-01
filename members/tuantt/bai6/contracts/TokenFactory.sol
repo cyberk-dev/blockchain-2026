@@ -14,7 +14,7 @@ contract TokenFactory is
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable
 {
-    uint256 public constant TOKEN_CREATION_FEE = 0.01 ether;
+    uint256 public constant TOKEN_CREATION_FEE = 0.0000001 ether;
 
     address public tokenBeaconAddress;
     mapping(address => TokenData) public createdTokens;
