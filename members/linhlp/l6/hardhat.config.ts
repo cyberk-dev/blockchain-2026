@@ -1,17 +1,18 @@
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import { configVariable, defineConfig } from "hardhat/config";
 import { transferTokenTask } from "./tasks/transfer-token.js";
-import './plugins/type-extensions.js';
+import "./plugins/type-extensions.js";
 import { createTokenTask } from "./tasks/create-token.js";
 import { buyTokenTask } from "./tasks/buy-token.js";
 
 export default defineConfig({
-  plugins: [hardhatToolboxViemPlugin,
+  plugins: [
+    hardhatToolboxViemPlugin,
     {
-      id: 'hardhat-viem-assertions-extended',
+      id: "hardhat-viem-assertions-extended",
       dependencies: () => [],
       hookHandlers: {
-        network: () => import('./plugins/viem-test.js'),
+        network: () => import("./plugins/viem-test.js"),
       },
     },
   ],
@@ -44,11 +45,11 @@ export default defineConfig({
     sepolia: {
       type: "http",
       chainType: "l1",
-      url: configVariable("SEPOLIA_RPC_URL"),
+      url: "https://eth-sepolia.g.alchemy.com/v2/oHSn32zQQJAtQNGRyvE9i",
       accounts: [configVariable("SEPOLIA_PRIVATE_KEY")],
     },
   },
   ignition: {
-    requiredConfirmations: 1
-  }
+    requiredConfirmations: 1,
+  },
 });
