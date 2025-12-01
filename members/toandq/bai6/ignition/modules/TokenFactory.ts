@@ -32,9 +32,13 @@ export default buildModule("TokenFactoryModule", (m) => {
     "AdminChanged",
     "newAdmin"
   );
-  const proxyAdmin = m.contractAt("ProxyAdmin", proxyAdminAddress);
+  const proxyAdmin = m.contractAt("ProxyAdmin", proxyAdminAddress, {
+    id: "ProxyAdmin",
+  });
 
-  const factory = m.contractAt("TokenFactory", factoryProxy);
+  const factory = m.contractAt("TokenFactory", factoryProxy, {
+    id: "TokenFactory",
+  });
 
   return {
     tokenImpl,
