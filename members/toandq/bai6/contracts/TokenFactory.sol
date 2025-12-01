@@ -37,7 +37,7 @@ contract TokenFactory is UUPSUpgradeable, OwnableUpgradeable {
 
         implementation = address(new Token());
         beacon = _beacon;
-        fee = 0.0001 ether;
+        fee = 0.00000001 ether;
         fee_recipient = msg.sender;
         recipient_fee_bps = 0; // Default: no BPS fee
     }
