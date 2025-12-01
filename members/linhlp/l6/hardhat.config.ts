@@ -1,23 +1,21 @@
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import { configVariable, defineConfig } from "hardhat/config";
-import hardhatVerify from "@nomicfoundation/hardhat-verify";
-import "./plugins/type-extensions.js";
-import hardhatViemAssertions from "@nomicfoundation/hardhat-viem-assertions";
+import { transferTokenTask } from "./tasks/transfer-token.js";
+import './plugins/type-extensions.js';
+import { createTokenTask } from "./tasks/create-token.js";
+import { buyTokenTask } from "./tasks/buy-token.js";
 
 export default defineConfig({
-  plugins: [
-    hardhatToolboxViemPlugin,
-    hardhatVerify,
-    hardhatViemAssertions,
+  plugins: [hardhatToolboxViemPlugin,
     {
-      id: "hardhat-viem-assertions-extended",
+      id: 'hardhat-viem-assertions-extended',
       dependencies: () => [],
       hookHandlers: {
-        // Load the plugin logic when the network starts
-        network: () => import("./plugins/viem-test.js"),
+        network: () => import('./plugins/viem-test.js'),
       },
     },
   ],
+  tasks: [transferTokenTask, createTokenTask, buyTokenTask],
   solidity: {
     profiles: {
       default: {
@@ -50,4 +48,7 @@ export default defineConfig({
       accounts: [configVariable("SEPOLIA_PRIVATE_KEY")],
     },
   },
+  ignition: {
+    requiredConfirmations: 1
+  }
 });
