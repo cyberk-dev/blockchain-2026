@@ -1,0 +1,7 @@
+{
+	"TokenModule": {
+		"name": "CBK",
+		"symbol": "ABC",
+		"initialSupply": "1000000000000000000n"
+	}
+}
