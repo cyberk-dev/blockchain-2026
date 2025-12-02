@@ -1,0 +1,12 @@
+{
+  "TokenModule": {
+    "name": "phaiVarLuon",
+    "symbol": "phaiVarLuon",
+    "paymentToken": "0x9e117C9a552AFE3bf093bE98588C303D9fe1f1DE",
+    "treasury": "TODO",
+    "endTime": 1764654780,
+    "slope": 1,
+    "basePrice": 2000000,
+    "feeBps": 300
+  }
+}
