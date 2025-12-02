@@ -1,0 +1,8 @@
+{
+    "TokenModule": {
+        "name": "THAI",
+        "symbol": "TDQ",
+        "initialSupply": "10000000000000000000000000000",
+        "price": "1000000000000000000"
+    }
+}

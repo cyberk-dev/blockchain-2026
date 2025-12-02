@@ -1,0 +1,19 @@
+{
+  "MockUSDTModule": {},
+  "TokenFactoryModule": {
+    "creationFee": "10000000000000000",
+    "feeRecipient": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "paymentToken": "0x7787581753711eE5A34e3e485077d4216cd87B36",
+    "buyFeePercent": "5"
+  },
+  "TokenModule": {
+    "name": "MarkD Token",
+    "symbol": "MARK",
+    "a": "1",
+    "b": "12",
+    "paymentToken": "0x7787581753711eE5A34e3e485077d4216cd87B36",
+    "saleDuration": "3600",
+    "buyFeePercent": "5",
+    "feeRecipient": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+  }
+}

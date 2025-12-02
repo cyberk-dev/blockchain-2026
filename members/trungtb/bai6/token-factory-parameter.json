@@ -1,0 +1,7 @@
+{
+  "TokenFactoryModule": {
+    "creationFee": "100",
+    "feeReceipt": "0x25b5e919b3421b86b8cc21CC35607F5B37B472B9",
+    "buyTokenFeePercentage": "100"
+  }
+}
