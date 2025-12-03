@@ -110,7 +110,7 @@ contract LPToken is ERC20, Ownable {
         address tokenOut,
         uint256 amountIn,
         uint256 amountOutMin
-    ) external onlyOwner {
+    ) external {
         uint256 reserveIn = tokenIn == token0 ? reserve0 : reserve1;
         uint256 reserveOut = tokenIn == token0 ? reserve1 : reserve0;
 
@@ -136,7 +136,7 @@ contract LPToken is ERC20, Ownable {
         address tokenOut,
         uint256 amountOut,
         uint256 amountInMax
-    ) external onlyOwner {
+    ) external {
         uint256 reserveIn = tokenIn == token0 ? reserve0 : reserve1;
         uint256 reserveOut = tokenIn == token0 ? reserve1 : reserve0;
 
