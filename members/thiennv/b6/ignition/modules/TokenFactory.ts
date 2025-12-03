@@ -1,9 +1,9 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
-export default buildModule("TokenModule", (m) => {
-  const sender = m.getAccount(0)
-
+const TokenFactoryModule = buildModule("TokenFactoryModule", (m) => {
   const factory = m.contract("TokenFactory");
 
   return { factory };
 });
+
+export default TokenFactoryModule;

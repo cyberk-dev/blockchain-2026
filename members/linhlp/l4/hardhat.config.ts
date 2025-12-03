@@ -1,9 +1,14 @@
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import { configVariable, defineConfig } from "hardhat/config";
+import hardhatVerify from "@nomicfoundation/hardhat-verify";
+import "./plugins/type-extensions.js";
+import hardhatViemAssertions from "@nomicfoundation/hardhat-viem-assertions";
 
 export default defineConfig({
   plugins: [
     hardhatToolboxViemPlugin,
+    hardhatVerify,
+    hardhatViemAssertions,
     {
       id: "hardhat-viem-assertions-extended",
       dependencies: () => [],

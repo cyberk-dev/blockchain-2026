@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {
     ReentrancyGuard
 } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -10,6 +11,8 @@ import {FullMath} from "./FullMath.sol";
 
 contract Token is ERC20, Ownable, ReentrancyGuard {
     using FullMath for uint256;
+    using SafeERC20 for IERC20;
+
     uint256 public constant PRECISION = 1e22;
     uint256 public a;
     uint256 public b;
@@ -69,9 +72,9 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
         uint256 feeAmount = (totalCost * buyFeePercent) / 100;
         uint256 netAmount = totalCost - feeAmount;
 
-        paymentToken.transferFrom(msg.sender, address(this), netAmount);
+        paymentToken.safeTransferFrom(msg.sender, address(this), netAmount);
         if (feeAmount > 0) {
-            paymentToken.transferFrom(msg.sender, feeRecipient, feeAmount);
+            paymentToken.safeTransferFrom(msg.sender, feeRecipient, feeAmount);
         }
 
         _mint(msg.sender, _amount);
@@ -90,6 +93,6 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
 
     function withdraw(address _to) external onlyOwner {
         uint256 balance = paymentToken.balanceOf(address(this));
-        paymentToken.transfer(_to, balance);
+        paymentToken.safeTransfer(_to, balance);
     }
 }

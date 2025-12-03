@@ -19,6 +19,7 @@ contract TokenFactory is Ownable {
 
     error InsufficientCreationFee();
     error InvalidFeeRecipient();
+    error FeeTransferFailed();
 
     constructor(uint256 _creationFee, address _feeRecipient) Ownable(msg.sender) {
         if (_feeRecipient == address(0)) revert InvalidFeeRecipient();
@@ -41,7 +42,7 @@ contract TokenFactory is Ownable {
         token.transferOwnership(msg.sender);
 
         (bool success, ) = feeRecipient.call{value: msg.value}("");
-        require(success, "Fee transfer failed");
+        if (!success) revert FeeTransferFailed();
 
         emit TokenCreated(address(token), msg.sender, _name, _symbol);
         return address(token);
