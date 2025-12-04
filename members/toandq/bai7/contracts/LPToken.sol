@@ -46,8 +46,8 @@ contract LPToken is ERC20, Ownable {
     }
 
     function mintLiquidity(address to) external onlyOwner {
-        uint256 balance0 = IERC20(token0).balanceOf(msg.sender);
-        uint256 balance1 = IERC20(token1).balanceOf(msg.sender);
+        uint256 balance0 = IERC20(token0).balanceOf(address(this));
+        uint256 balance1 = IERC20(token1).balanceOf(address(this));
 
         uint256 amount0 = balance0.saturatingSub(reserve0);
         uint256 amount1 = balance1.saturatingSub(reserve1);
@@ -110,7 +110,7 @@ contract LPToken is ERC20, Ownable {
         address tokenOut,
         uint256 amountIn,
         uint256 amountOutMin
-    ) external {
+    ) external onlyOwner {
         uint256 reserveIn = tokenIn == token0 ? reserve0 : reserve1;
         uint256 reserveOut = tokenIn == token0 ? reserve1 : reserve0;
 
@@ -136,7 +136,7 @@ contract LPToken is ERC20, Ownable {
         address tokenOut,
         uint256 amountOut,
         uint256 amountInMax
-    ) external {
+    ) external onlyOwner {
         uint256 reserveIn = tokenIn == token0 ? reserve0 : reserve1;
         uint256 reserveOut = tokenIn == token0 ? reserve1 : reserve0;
 
