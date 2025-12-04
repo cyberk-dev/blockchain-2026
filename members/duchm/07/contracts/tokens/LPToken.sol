@@ -18,6 +18,7 @@ contract LPToken is ERC20, ReentrancyGuard {
 
     error InsufficientLiquidity();
     error SlippageProtection();
+    error InvalidToken();
 
     constructor(address _token0, address _token1) ERC20("LPToken", "LP") {
         token0 = _token0;
@@ -38,8 +39,10 @@ contract LPToken is ERC20, ReentrancyGuard {
             );
         }
         if (liquidity == 0) revert InsufficientLiquidity();
-        reserve0 += amount0;
-        reserve1 += amount1;
+        unchecked {
+            reserve1 += amount1;
+            reserve0 += amount0;
+        }
         IERC20(token0).safeTransferFrom(msg.sender, address(this), amount0);
         IERC20(token1).safeTransferFrom(msg.sender, address(this), amount1);
         _mint(msg.sender, liquidity);
@@ -80,24 +83,47 @@ contract LPToken is ERC20, ReentrancyGuard {
         );
     }
 
-    function swapExactIn(
-        uint256 amountIn,
-        bool isBuy,
-        uint256 minAmountOut
-    ) external nonReentrant returns (uint256 amountOut) {
-        if (amountIn == 0) revert InsufficientLiquidity();
+    function getSwapDirection(
+        address tokenIn
+    )
+        public
+        view
+        returns (
+            bool isBuy,
+            IERC20 tokenOut,
+            uint256 reserveIn,
+            uint256 reserveOut
+        )
+    {
+        isBuy = tokenIn == token1;
         (IERC20 tIn, IERC20 tOut, uint256 rIn, uint256 rOut) = isBuy
             ? (IERC20(token1), IERC20(token0), reserve1, reserve0)
             : (IERC20(token0), IERC20(token1), reserve0, reserve1);
+        if (address(tIn) != tokenIn) revert InvalidToken();
+        return (isBuy, tOut, rIn, rOut);
+    }
+
+    function swapExactIn(
+        uint256 amountIn,
+        address tokenIn,
+        uint256 minAmountOut
+    ) external nonReentrant returns (uint256 amountOut) {
+        if (amountIn == 0) revert InsufficientLiquidity();
+        IERC20 tIn = IERC20(tokenIn);
+        (bool isBuy, IERC20 tOut, uint256 rIn, uint256 rOut) = getSwapDirection(
+            tokenIn
+        );
         uint256 effectiveIn = amountIn.mulDiv(997, 1000);
         amountOut = getAmountOut(effectiveIn, rIn, rOut);
         if (amountOut < minAmountOut) revert SlippageProtection();
-        if (isBuy) {
-            reserve1 += amountIn;
-            reserve0 -= amountOut;
-        } else {
-            reserve0 += amountIn;
-            reserve1 -= amountOut;
+        unchecked {
+            if (isBuy) {
+                reserve1 += amountIn;
+                reserve0 -= amountOut;
+            } else {
+                reserve0 += amountIn;
+                reserve1 -= amountOut;
+            }
         }
         tIn.safeTransferFrom(msg.sender, address(this), amountIn);
         tOut.safeTransfer(msg.sender, amountOut);
@@ -105,22 +131,27 @@ contract LPToken is ERC20, ReentrancyGuard {
 
     function swapExactOut(
         uint256 amountOut,
-        bool isBuy,
+        address tokenOut,
         uint256 maxAmountIn
     ) external nonReentrant returns (uint256 amountIn) {
-        (IERC20 tIn, IERC20 tOut, uint256 rIn, uint256 rOut) = isBuy
-            ? (IERC20(token1), IERC20(token0), reserve1, reserve0)
-            : (IERC20(token0), IERC20(token1), reserve0, reserve1);
+        address tokenIn = tokenOut == token0 ? token1 : token0;
+        if (tokenOut != token0 && tokenOut != token1) revert InvalidToken();
+        IERC20 tIn = IERC20(tokenIn);
+        (bool isBuy, IERC20 tOut, uint256 rIn, uint256 rOut) = getSwapDirection(
+            tokenIn
+        );
         uint256 _amountIn = getAmountIn(amountOut, rIn, rOut);
         amountIn = _amountIn.mulDiv(1000, 997);
         if (amountIn == 0) revert InsufficientLiquidity();
         if (amountIn > maxAmountIn) revert SlippageProtection();
-        if (isBuy) {
-            reserve1 += amountIn;
-            reserve0 -= amountOut;
-        } else {
-            reserve0 += amountIn;
-            reserve1 -= amountOut;
+        unchecked {
+            if (isBuy) {
+                reserve1 += amountIn;
+                reserve0 -= amountOut;
+            } else {
+                reserve0 += amountIn;
+                reserve1 -= amountOut;
+            }
         }
         tIn.safeTransferFrom(msg.sender, address(this), amountIn);
         tOut.safeTransfer(msg.sender, amountOut);
