@@ -1,0 +1,12 @@
+{
+  "TokenModule": {
+    "name": "Cyberk",
+    "symbol": "CBK",
+    "initialSupply": "10000000000000000000000000000",
+    "scale": "1000000000000000000000000",
+    "endTime": "1767077454",
+    "a": 2,
+    "b": 4,
+    "feeRecipient": "0x887ad2b33ACCAe95fEE6CA7caFD66D312Dc4ad5E"
+  }
+}
