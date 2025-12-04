@@ -98,4 +98,27 @@ describe("TokenFactory", async function () {
     await viem.assertions.erc20BalancesHaveChanged(tx, token0, [{ address: buyer1.account.address, amount: -amountIn }])
     await viem.assertions.erc20BalancesHaveChanged(tx, token1, [{ address: buyer1.account.address, amount: amountOut }])
   })
+
+  it("Should swap exact out", async function () {
+    const { lpFactory, token0, token1, owner, buyer1, buyer2, viem } = await setup();
+    await lpFactory.write.createLP([token0.address, token1.address]);
+    const pairAddr = await lpFactory.read.lpPairs([token0.address, token1.address], { account: owner.account });
+    const pair = await viem.getContractAt("LPToken", pairAddr);
+
+    await mintAndApprove(token0, owner.account, pair.address, parseEther("1000"));
+    await mintAndApprove(token1, owner.account, pair.address, parseEther("4000"));
+    await mintAndApprove(token0, buyer1.account, pair.address, parseEther("5000"));
+    await mintAndApprove(token1, buyer1.account, pair.address, parseEther("5000"));
+
+    await pair.write.addLiquidity([parseEther("100"), parseEther("400")]);
+
+    const [, , rIn, rOut] = await pair.read.getSwapDirection([token0.address]);
+
+    const amountOut = parseEther('5');
+    const amountIn = await pair.read.getAmountIn([amountOut, rIn, rOut]);
+    const effectiveIn = amountIn * 1000n / 997n;
+    const tx = pair.write.swapExactOut([amountOut, token1.address, amountIn * 1010n / 1000n], { account: buyer1.account })
+    await viem.assertions.erc20BalancesHaveChanged(tx, token1, [{ address: buyer1.account.address, amount: amountOut }])
+    await viem.assertions.erc20BalancesHaveChanged(tx, token0, [{ address: buyer1.account.address, amount: -effectiveIn }])
+  })
 })
