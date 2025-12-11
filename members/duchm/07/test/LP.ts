@@ -61,19 +61,98 @@ describe("TokenFactory", async function () {
     assert.equal(pairAddr, pairAddrReverse);
   });
 
-  it("Should add liquidity", async function () {
-    const { lpFactory, token0, token1, owner, viem } = await setup();
-    await lpFactory.write.createLP([token0.address, token1.address]);
-    const pair = await getPair(viem, lpFactory, token0.address, token1.address, owner);
-    await mintAndApprove(token0, owner.account, pair.address, parseEther("10000"));
-    await mintAndApprove(token1, owner.account, pair.address, parseEther("10000"));
-    await pair.write.addLiquidity([parseEther("100"), parseEther("400")]);
-    const balance1 = await pair.read.balanceOf([owner.account.address]);
-    assert.equal(balance1, parseEther("200"));
+  describe("Should add liquidity", async function () {
+    it("Add liquidity", async function () {
+      const { lpFactory, token0, token1, owner, viem } = await setup();
+      await lpFactory.write.createLP([token0.address, token1.address]);
+      const pair = await getPair(viem, lpFactory, token0.address, token1.address, owner);
+      await mintAndApprove(token0, owner.account, pair.address, parseEther("10000"));
+      await mintAndApprove(token1, owner.account, pair.address, parseEther("10000"));
 
-    await pair.write.addLiquidity([parseEther("500"), parseEther("500")]);
-    const balance2 = await pair.read.balanceOf([owner.account.address]);
-    assert.equal(balance2, parseEther("450"));
+      await viem.assertions.erc20BalancesHaveChanged(
+        pair.write.addLiquidity([parseEther("100"), parseEther("400")]),
+        pair,
+        [{ address: owner.account.address, amount: parseEther('200') }]
+      )
+
+      await viem.assertions.erc20BalancesHaveChanged(
+        pair.write.addLiquidity([parseEther("200"), parseEther("800")]),
+        pair,
+        [{ address: owner.account.address, amount: parseEther('400') }]
+      )
+    })
+
+    // Scenario 2: Excess Token1 (Limiting Factor is Token0)
+    // Goal: Verify logic "switches" to use amount0 as the baseline and ignores the excess amount1.
+
+    //  * Inputs: amount0 = 100, amount1 = 800 (User sent double the necessary Token1)
+    //  * Logic Trace:
+    //      * wanted0 (needs from 800) = 800  (1/4) = 200*
+    //      * wanted1 (needs from 100) = 100  (4/1) = 400*
+    //      * Check:
+    //          * wanted0 (200) > amount0 (100) -> True (We don't have enough T0 for this much T1)
+    //          * wanted1 (400) <= amount1 (800) -> True (We have plenty of T1)
+    //      * Clamp:
+    //          * wanted0 = min(200, 100) -> 100
+    //          * wanted1 = min(400, 800) -> 400
+    //  * Expected Result:
+    //      * Used0: 100
+    //      * Used1: 400 (400 refunded)
+    //      * Liquidity Minted: 200
+    it("Add liquidity exceed token1", async function () {
+      const { lpFactory, token0, token1, owner, viem } = await setup();
+      await lpFactory.write.createLP([token0.address, token1.address]);
+      const pair = await getPair(viem, lpFactory, token0.address, token1.address, owner);
+      await mintAndApprove(token0, owner.account, pair.address, parseEther("10000"));
+      await mintAndApprove(token1, owner.account, pair.address, parseEther("10000"));
+
+      await viem.assertions.erc20BalancesHaveChanged(
+        pair.write.addLiquidity([parseEther("100"), parseEther("400")]),
+        pair,
+        [{ address: owner.account.address, amount: parseEther('200') }]
+      )
+      await viem.assertions.erc20BalancesHaveChanged(
+        pair.write.addLiquidity([parseEther("100"), parseEther("800")]),
+        pair,
+        [{ address: owner.account.address, amount: parseEther('200') }]
+      )
+    })
+
+    // Scenario 3: Excess Token0 (Limiting Factor is Token1)
+    // Goal: Verify logic "switches" to use amount1 as the baseline and ignores the excess amount0.
+
+    //  * Inputs: amount0 = 300, amount1 = 800 (User sent double the necessary Token1)
+    //  * Logic Trace:
+    //      * wanted0 (needs from 800) = 800  (1/4) = 200*
+    //      * wanted1 (needs from 300) = 100  (4/1) = 1200*
+    //      * Check:
+    //          * wanted0 (200) < amount0 (300) -> True (We don't have enough T0 for this much T1)
+    //          * wanted1 (1200) > amount1 (800) -> True (We have plenty of T1)
+    //      * Clamp:
+    //          * wanted0 = min(200, 300) -> 200
+    //          * wanted1 = min(1200, 800) -> 800
+    //  * Expected Result:
+    //      * Used0: 200 (100 refunded)
+    //      * Used1: 800
+    //      * Liquidity Minted: 400
+    it("Add liquidity exceed token0", async function () {
+      const { lpFactory, token0, token1, owner, viem } = await setup();
+      await lpFactory.write.createLP([token0.address, token1.address]);
+      const pair = await getPair(viem, lpFactory, token0.address, token1.address, owner);
+      await mintAndApprove(token0, owner.account, pair.address, parseEther("10000"));
+      await mintAndApprove(token1, owner.account, pair.address, parseEther("10000"));
+
+      await viem.assertions.erc20BalancesHaveChanged(
+        pair.write.addLiquidity([parseEther("100"), parseEther("400")]),
+        pair,
+        [{ address: owner.account.address, amount: parseEther('200') }]
+      )
+      await viem.assertions.erc20BalancesHaveChanged(
+        pair.write.addLiquidity([parseEther("300"), parseEther("800")]),
+        pair,
+        [{ address: owner.account.address, amount: parseEther('400') }]
+      )
+    })
   });
 
   it("Should swap exact in", async function () {

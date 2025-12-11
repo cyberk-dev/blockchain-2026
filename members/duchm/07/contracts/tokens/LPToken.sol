@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../libraries/FullMath.sol";
+import "hardhat/console.sol";
 
 contract LPToken is ERC20, ReentrancyGuard {
     using FullMath for uint256;
@@ -29,22 +30,42 @@ contract LPToken is ERC20, ReentrancyGuard {
         uint256 amount0,
         uint256 amount1
     ) external nonReentrant returns (uint256 liquidity) {
+        uint256 wanted0 = amount0;
+        uint256 wanted1 = amount1;
         uint256 supply = totalSupply();
         if (supply == 0) {
-            liquidity = Math.sqrt(amount0 * amount1);
+            liquidity = Math.sqrt(wanted0 * wanted1);
+            // console.log("first liquidity:", liquidity);
         } else {
+            // console.log("amount0:", amount0);
+            // console.log("amount1:", amount1);
+            wanted0 = amount1.mulDivRoundingUp(reserve0, reserve1);
+            wanted1 = amount0.mulDivRoundingUp(reserve1, reserve0);
+            // console.log("Wanted0 before clamp:", wanted0);
+            // console.log("Wanted1 before clamp:", wanted1);
+            if (wanted0 > amount0 && wanted1 > amount1) {
+                revert InsufficientLiquidity();
+            }
+            wanted0 = Math.min(wanted0, amount0); // 200 / 100 -> 100
+            wanted1 = Math.min(wanted1, amount1); // 400 / 800 -> 400
+            // console.log("Wanted0 final:", wanted0);
+            // console.log("Wanted1 final:", wanted1);
+            // console.log("supply:", supply);
+            // console.log("reserve0:", reserve0);
+            // console.log("reserve1:", reserve1);
             liquidity = Math.min(
-                amount0.mulDiv(supply, reserve0),
-                amount1.mulDiv(supply, reserve1)
+                wanted0.mulDiv(supply, reserve0), // 200 * 200 / 100 -> 400
+                wanted1.mulDiv(supply, reserve1) // 800 * 200 / 400 -> 400
             );
+            // console.log("second liquidity:", liquidity);
         }
         if (liquidity == 0) revert InsufficientLiquidity();
         unchecked {
-            reserve1 += amount1;
-            reserve0 += amount0;
+            reserve1 += wanted1;
+            reserve0 += wanted0;
         }
-        IERC20(token0).safeTransferFrom(msg.sender, address(this), amount0);
-        IERC20(token1).safeTransferFrom(msg.sender, address(this), amount1);
+        IERC20(token0).safeTransferFrom(msg.sender, address(this), wanted0);
+        IERC20(token1).safeTransferFrom(msg.sender, address(this), wanted1);
         _mint(msg.sender, liquidity);
     }
 
