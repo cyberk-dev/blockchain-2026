@@ -2,15 +2,22 @@
 pragma solidity ^0.8.28;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {FullMath} from "./contracts/FullMath.sol";
+import {FullMath} from "./FullMath.sol";
+import {
+    ReentrancyGuard
+} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
-contract LPToken is ERC20 {
+contract LPToken is ERC20, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using FullMath for uint256;
 
+    uint256 public constant BASE_PERCENT = 1000;
     uint256 public constant FEE_PERCENT = 3; // 0.3%
 
     address public tokenA;
@@ -59,12 +66,11 @@ contract LPToken is ERC20 {
 
     error WrongTokenAddress();
 
-    constructor(address _tokenA, address _tokenB) ERC20() {
+    constructor(address _tokenA, address _tokenB) ERC20("LP Token", "LPT") {
         tokenA = _tokenA;
         tokenB = _tokenB;
         reserveA = 0;
         reserveB = 0;
-        k = 0;
     }
 
     function addLiquidity(
@@ -107,8 +113,8 @@ contract LPToken is ERC20 {
             revert AmountIsZero();
         }
 
-        tokenA.safeTransferFrom(msg.sender, address(this), amountA);
-        tokenB.safeTransferFrom(msg.sender, address(this), amountB);
+        IERC20(tokenA).safeTransferFrom(msg.sender, address(this), amountA);
+        IERC20(tokenB).safeTransferFrom(msg.sender, address(this), amountB);
 
         uint256 balanceAAfter = IERC20(tokenA).balanceOf(address(this));
         uint256 balanceBAfter = IERC20(tokenB).balanceOf(address(this));
@@ -117,7 +123,7 @@ contract LPToken is ERC20 {
         uint256 amountBAdded = balanceBAfter - balanceBBefore;
 
         if (totalSupply() == 0) {
-            _mint(msg.sender, sqrt(amountAAdded * amountBAdded));
+            _mint(msg.sender, Math.sqrt(amountAAdded * amountBAdded));
         } else {
             uint256 liquidityA = FullMath.mulDiv(
                 amountAAdded,
@@ -208,26 +214,15 @@ contract LPToken is ERC20 {
             );
         }
 
-        uint256 amountInWithFee = (amountIn * (1000 - FEE_PERCENT)) / 1000;
+        uint256 amountOut = getAmountOut(amountIn, fromToken);
 
-        uint256 amountOut;
         if (fromToken == tokenA) {
-            amountOut = FullMath.mulDiv(
-                amountInWithFee,
-                reserveB,
-                reserveA + amountInWithFee
-            );
             if (amountOut > reserveB) {
                 revert InsufficientLiquidity(tokenB, amountOut, reserveB);
             }
             reserveA += amountIn;
             reserveB -= amountOut;
         } else {
-            amountOut = FullMath.mulDiv(
-                amountInWithFee,
-                reserveA,
-                reserveB + amountInWithFee
-            );
             if (amountOut > reserveA) {
                 revert InsufficientLiquidity(tokenA, amountOut, reserveA);
             }
@@ -265,24 +260,14 @@ contract LPToken is ERC20 {
             revert WrongTokenAddress();
         }
 
-        uint256 amountIn;
+        uint256 amountIn = getAmountIn(amountOut, toToken);
         if (toToken == tokenA) {
-            amountIn = FullMath.mulDivUp(
-                reserveB * 1000,
-                amountOut,
-                (reserveA - amountOut) * (1000 - FEE_PERCENT)
-            );
             if (amountIn > reserveB) {
                 revert InsufficientLiquidity(tokenB, amountIn, reserveB);
             }
             reserveA -= amountOut;
             reserveB += amountIn;
         } else {
-            amountIn = FullMath.mulDivUp(
-                reserveA * 1000,
-                amountOut,
-                (reserveB - amountOut) * (1000 - FEE_PERCENT)
-            );
             if (amountIn > reserveA) {
                 revert InsufficientLiquidity(tokenA, amountIn, reserveA);
             }
@@ -300,16 +285,69 @@ contract LPToken is ERC20 {
         emit Swap(msg.sender, fromToken, amountIn, toToken, amountOut);
     }
 
-    function getCurrentRatio()
-        external
-        view
-        returns (uint256 ratioA, uint256 ratioB)
-    {
+    function getAmountOut(
+        uint256 amountIn,
+        address fromToken
+    ) public view returns (uint256) {
+        if (fromToken != tokenA && fromToken != tokenB) {
+            revert WrongTokenAddress();
+        }
+
+        uint256 amountInAfterFee = (amountIn * (BASE_PERCENT - FEE_PERCENT)) /
+            BASE_PERCENT;
+
+        uint256 amountOut;
+        if (fromToken == tokenA) {
+            amountOut = FullMath.mulDiv(
+                amountInAfterFee,
+                reserveB,
+                reserveA + amountInAfterFee
+            );
+        } else {
+            amountOut = FullMath.mulDiv(
+                amountInAfterFee,
+                reserveA,
+                reserveB + amountInAfterFee
+            );
+        }
+
+        return amountOut;
+    }
+
+    function getAmountIn(
+        uint256 amountOut,
+        address toToken
+    ) public view returns (uint256) {
+        if (toToken != tokenA && toToken != tokenB) {
+            revert WrongTokenAddress();
+        }
+
+        uint256 amountIn;
+        if (toToken == tokenA) {
+            amountIn = FullMath.mulDivRoundingUp(
+                reserveB * BASE_PERCENT,
+                amountOut,
+                (reserveA - amountOut) * (BASE_PERCENT - FEE_PERCENT)
+            );
+        } else {
+            amountIn = FullMath.mulDivRoundingUp(
+                reserveA * BASE_PERCENT,
+                amountOut,
+                (reserveB - amountOut) * (BASE_PERCENT - FEE_PERCENT)
+            );
+        }
+
+        return amountIn;
+    }
+
+    function getCurrentRatio() public view returns (uint256, uint256) {
         if (reserveB == 0) {
             return (0, 0);
         }
-        ratioA = (reserveA * 1e18) / reserveB;
-        ratioB = (reserveB * 1e18) / reserveA;
+        uint256 ratioA = (reserveA * 1e18) / reserveB;
+        uint256 ratioB = (reserveB * 1e18) / reserveA;
+
+        return (ratioA, ratioB);
     }
 
     function getLPLiquidity() external view returns (uint256) {
