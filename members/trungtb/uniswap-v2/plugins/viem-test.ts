@@ -1,7 +1,7 @@
-import type { HookContext, NetworkHooks } from "hardhat/types/hooks";
-import type { ChainType, NetworkConnection } from "hardhat/types/network";
-import assert from "node:assert/strict";
-import { parseAbi } from "viem";
+import type { HookContext, NetworkHooks } from 'hardhat/types/hooks';
+import type { ChainType, NetworkConnection } from 'hardhat/types/network';
+import assert from 'node:assert/strict';
+import { parseAbi } from 'viem';
 
 // const abi = [
 //   {
@@ -13,7 +13,7 @@ import { parseAbi } from "viem";
 //   },
 // ];
 
-const abi = parseAbi(["function balanceOf(address) view returns (uint256)"]);
+const abi = parseAbi(['function balanceOf(address) view returns (uint256)']);
 
 export default async (): Promise<Partial<NetworkHooks>> => {
   const handlers: Partial<NetworkHooks> = {
@@ -43,7 +43,7 @@ export default async (): Promise<Partial<NetworkHooks>> => {
               await publicClient.readContract({
                 abi,
                 address: tokenAddress,
-                functionName: "balanceOf",
+                functionName: 'balanceOf',
                 args: [address],
                 blockNumber: receipt.blockNumber - 1n,
               })
@@ -56,7 +56,7 @@ export default async (): Promise<Partial<NetworkHooks>> => {
             publicClient.readContract({
               abi,
               address: (token as any)?.address || token,
-              functionName: "balanceOf",
+              functionName: 'balanceOf',
               args: [address],
             })
           )
@@ -74,7 +74,8 @@ export default async (): Promise<Partial<NetworkHooks>> => {
 
           assert.ok(
             delta <= diff,
-            `For address "${address}", expected balance to change by ${amount} (from ${balanceBefore} to ${balanceBefore + amount
+            `For address "${address}", expected balance to change by ${amount} (from ${balanceBefore} to ${
+              balanceBefore + amount
             }), but got a change of ${actualChange} instead.`
           );
         });
