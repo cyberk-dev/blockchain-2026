@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      Math.sol:
+        specifier: link:openzeppelin-solidity/contracts/utils/math/Math.sol
+        version: link:openzeppelin-solidity/contracts/utils/math/Math.sol
       hardhat:
         specifier: ^3.0.16
         version: 3.0.16

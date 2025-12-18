@@ -23,12 +23,7 @@ export default async (): Promise<Partial<NetworkHooks>> => {
     ) {
       const connection = await next(context);
 
-      connection.viem.assertions.erc20BalancesHaveChanged = async (
-        resolvedTxHash,
-        token,
-        changes,
-        diff = 0n
-      ) => {
+      connection.viem.assertions.erc20BalancesHaveChanged = async (resolvedTxHash, token, changes, diff = 0n) => {
         const { viem } = connection;
         const publicClient = await viem.getPublicClient();
 
@@ -67,16 +62,11 @@ export default async (): Promise<Partial<NetworkHooks>> => {
 
           const actualChange = balanceAfter - balanceBefore;
 
-          const delta =
-            actualChange > amount
-              ? actualChange - amount
-              : amount - actualChange;
+          const delta = actualChange > amount ? actualChange - amount : amount - actualChange;
 
           assert.ok(
             delta <= diff,
-            `For address "${address}", expected balance to change by ${amount} (from ${balanceBefore} to ${
-              balanceBefore + amount
-            }), but got a change of ${actualChange} instead.`
+            `For address "${address}", expected balance to change by ${amount} (from ${balanceBefore} to ${balanceBefore + amount}), but got a change of ${actualChange} instead.`
           );
         });
       };
