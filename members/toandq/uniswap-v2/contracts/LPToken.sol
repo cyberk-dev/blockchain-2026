@@ -78,6 +78,7 @@ contract LPToken is ERC20, Ownable, ReentrancyGuard {
             );
         }
 
+        // Should never happen because amount0 and amount1 cannot be 0 - checked in the beginning
         if (liquidity == 0) revert InsufficientLiquidity();
 
         IERC20(token0).safeTransferFrom(msg.sender, address(this), in0);
@@ -130,8 +131,6 @@ contract LPToken is ERC20, Ownable, ReentrancyGuard {
             token0
             ? (reserve0, reserve1, token1)
             : (reserve1, reserve0, token0);
-
-        if (amountOut > reserveOut) revert InsufficientAmountOut();
 
         amountIn = _getAmountIn(amountOut, reserveIn, reserveOut);
         if (amountIn > amountInMax) {
