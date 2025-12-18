@@ -4,7 +4,10 @@ import { configVariable, defineConfig } from "hardhat/config";
 import "./plugins/type-extensions.js";
 import hardhatViemAssertions from "@nomicfoundation/hardhat-viem-assertions";
 import { createTokenTask } from "./tasks/create-token.js";
-import { buyTokenTask } from "./tasks/buy-token.js";
+import { addLiquidityTask } from "./tasks/add-liquidity.js";
+import { removeLiquidityTask } from "./tasks/remove-liquidity.js";
+import { swapExactInTask } from "./tasks/swap-exact-in.js";
+import { swapExactOutTask } from "./tasks/swap-exact-out.js";
 
 export default defineConfig({
   plugins: [
@@ -20,7 +23,13 @@ export default defineConfig({
       },
     },
   ],
-  tasks: [createTokenTask, buyTokenTask],
+  tasks: [
+    createTokenTask,
+    addLiquidityTask,
+    removeLiquidityTask,
+    swapExactInTask,
+    swapExactOutTask,
+  ],
   solidity: {
     profiles: {
       default: {

@@ -1,0 +1,9 @@
+{
+  "TokenFactoryWithBeaconModule": {
+    "feeRecipient": "0xD8Cf5c497D445A923633d2A94110B55267eB2883",
+    "name": "Token A",
+    "symbol": "TKNA",
+    "nameB": "Token B",
+    "symbolB": "TKNB"
+  }
+}
