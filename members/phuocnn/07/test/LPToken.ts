@@ -1,11 +1,9 @@
-import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { parseUnits } from 'viem';
 
 import { network } from 'hardhat';
 import LPTokenModule from '../ignition/modules/LPToken.js';
 import { NetworkConnection } from 'hardhat/types/network';
-import { parse } from 'node:path';
 
 async function deploy(connection: NetworkConnection) {
   const { viem, ignition } = await network.connect();
@@ -138,7 +136,7 @@ describe('LPToken', async function () {
 
     const swapTask = lpToken.write.swap_exact_out([
       amountOut,
-      1000000000000000000000n,
+      expectedAmountIn,
       token1.address,
     ]);
 

@@ -25,13 +25,6 @@ contract LPToken is ERC20 {
 
     constructor() ERC20("LPToken", "LP") {}
 
-    // 100 token A/ 
-    // 1 token B
-
-    // 100 token A (có cả fee)
-    // => 99,7 token A
-    // ? token B
-
     function initialize(
         address _token0,
         address _token1,
@@ -161,7 +154,11 @@ contract LPToken is ERC20 {
 
         uint256 amountInReal = amountIn.mulDiv(997, 1000);
 
-        amountOut = FullMath.mulDiv(amountInReal, reserveOut, reserveIn + amountInReal);
+        amountOut = FullMath.mulDiv(
+            amountInReal,
+            reserveOut,
+            reserveIn + amountInReal
+        );
         if (amountOut < amountOutMin) revert InsufficientOutput();
 
         address tokenOut = tokenIn == token0 ? token1 : token0;
@@ -199,10 +196,7 @@ contract LPToken is ERC20 {
 
         if (reserveOut < amountOut) revert InsufficientOutput();
 
-        // amountInReal = amountInWithFee * 997 / 1000
-
-        amountIn = FullMath.mulDivRoundingUp(
-            amountOut,
+        amountIn = amountOut.mulDivRoundingUp(
             reserveIn * 1000,
             (reserveOut - amountOut) * 997
         );
