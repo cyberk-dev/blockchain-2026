@@ -153,10 +153,10 @@ contract LPToken is ERC20, ReentrancyGuard {
     }
 
     function removeLiquidity(uint256 lpAmount) external nonReentrant {
-        uint256 share = (lpAmount * 1e18) / totalSupply();
+        uint256 share = FullMath.mulDiv(lpAmount, 1e18, totalSupply());
 
-        uint256 amountA = (reserveA * share) / 1e18;
-        uint256 amountB = (reserveB * share) / 1e18;
+        uint256 amountA = FullMath.mulDiv(reserveA, share, 1e18);
+        uint256 amountB = FullMath.mulDiv(reserveB, share, 1e18);
 
         if (lpAmount == 0) {
             revert AmountIsZero();
@@ -344,8 +344,8 @@ contract LPToken is ERC20, ReentrancyGuard {
         if (reserveB == 0) {
             return (0, 0);
         }
-        uint256 ratioA = (reserveA * 1e18) / reserveB;
-        uint256 ratioB = (reserveB * 1e18) / reserveA;
+        uint256 ratioA = FullMath.mulDiv(reserveA, 1e18, reserveB);
+        uint256 ratioB = FullMath.mulDiv(reserveB, 1e18, reserveA);
 
         return (ratioA, ratioB);
     }
