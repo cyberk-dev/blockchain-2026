@@ -234,4 +234,184 @@ describe("LPToken", async function () {
 			]);
 		});
 	});
+
+	describe("Get amount out", () => {
+		it("should get correct amount out", async () => {
+			const { networkHelpers } = await network.connect();
+			const { token0, token1, lpToken, owner, viem } =
+				await networkHelpers.loadFixture(deploy);
+
+			await token0.write.approve([lpToken.address, parseUnits("10000", 18)]);
+			await token1.write.approve([lpToken.address, parseUnits("10000", 18)]);
+
+			await lpToken.write.mintLiquidity([
+				parseUnits("100", 18),
+				parseUnits("1000", 18),
+			]);
+
+			const amountOut = await lpToken.read.getAmountOut([
+				token1.address,
+				parseUnits("10", 18),
+			]);
+
+			const tx = lpToken.write.swapExactIn([
+				token1.address,
+				0n,
+				parseUnits("10", 18),
+			]);
+
+			await viem.assertions.erc20BalancesHaveChanged(tx, token0.address, [
+				{ address: owner.account.address, amount: amountOut },
+			]);
+		});
+	});
+	describe("get amount in", () => {
+		it("should get correct amount out", async () => {
+			const { networkHelpers } = await network.connect();
+			const { token0, token1, lpToken, owner, viem } =
+				await networkHelpers.loadFixture(deploy);
+
+			await token0.write.approve([lpToken.address, parseUnits("10000", 18)]);
+			await token1.write.approve([lpToken.address, parseUnits("10000", 18)]);
+
+			await lpToken.write.mintLiquidity([
+				parseUnits("100", 18),
+				parseUnits("1000", 18),
+			]);
+
+			const amountIn = await lpToken.read.getAmountIn([
+				token0.address,
+				parseUnits("10", 18),
+			]);
+
+			const tx = lpToken.write.swapExactOut([
+				token0.address,
+				parseUnits("10", 18),
+				parseUnits("10000", 18),
+			]);
+
+			await viem.assertions.erc20BalancesHaveChanged(tx, token1.address, [
+				{ address: owner.account.address, amount: -amountIn },
+			]);
+		});
+	});
+
+	describe("swap exact out", () => {
+		it("should swap successfully", async () => {
+			const { networkHelpers } = await network.connect();
+			const { token0, token1, lpToken, owner, viem } =
+				await networkHelpers.loadFixture(deploy);
+
+			await token0.write.approve([lpToken.address, parseUnits("10000", 18)]);
+			await token1.write.approve([lpToken.address, parseUnits("10000", 18)]);
+
+			await lpToken.write.mintLiquidity([
+				parseUnits("100", 18),
+				parseUnits("1000", 18),
+			]);
+
+			const amountIn = await lpToken.read.getAmountIn([
+				token0.address,
+				parseUnits("10", 18),
+			]);
+
+			const tx = lpToken.write.swapExactOut([
+				token0.address,
+				parseUnits("10", 18),
+				parseUnits("10000", 18),
+			]);
+
+			await viem.assertions.erc20BalancesHaveChanged(tx, token1.address, [
+				{ address: owner.account.address, amount: -amountIn },
+			]);
+		});
+
+		it("should revert if amountIn > amountInMax", async () => {
+			const { networkHelpers } = await network.connect();
+			const { token0, token1, lpToken, owner, viem } =
+				await networkHelpers.loadFixture(deploy);
+
+			await token0.write.approve([lpToken.address, parseUnits("10000", 18)]);
+			await token1.write.approve([lpToken.address, parseUnits("10000", 18)]);
+
+			await lpToken.write.mintLiquidity([
+				parseUnits("100", 18),
+				parseUnits("1000", 18),
+			]);
+
+			const amountIn = await lpToken.read.getAmountIn([
+				token0.address,
+				parseUnits("10", 18),
+			]);
+
+			await viem.assertions.revertWithCustomError(
+				lpToken.write.swapExactOut([
+					token0.address,
+					parseUnits("10", 18),
+					amountIn - 1n,
+				]),
+				lpToken,
+				"SlippageExceeded"
+			);
+		});
+	});
+
+	describe("swap exact in", () => {
+		it("should swap successfully", async () => {
+			const { networkHelpers } = await network.connect();
+			const { token0, token1, lpToken, owner, viem } =
+				await networkHelpers.loadFixture(deploy);
+
+			await token0.write.approve([lpToken.address, parseUnits("10000", 18)]);
+			await token1.write.approve([lpToken.address, parseUnits("10000", 18)]);
+
+			await lpToken.write.mintLiquidity([
+				parseUnits("100", 18),
+				parseUnits("1000", 18),
+			]);
+
+			const amountOut = await lpToken.read.getAmountOut([
+				token1.address,
+				parseUnits("10", 18),
+			]);
+
+			const tx = lpToken.write.swapExactIn([
+				token1.address,
+				0n,
+				parseUnits("10", 18),
+			]);
+
+			await viem.assertions.erc20BalancesHaveChanged(tx, token0.address, [
+				{ address: owner.account.address, amount: amountOut },
+			]);
+		});
+		it("should revert if amount out > amount out min", async () => {
+			const { networkHelpers } = await network.connect();
+			const { token0, token1, lpToken, owner, viem } =
+				await networkHelpers.loadFixture(deploy);
+
+			await token0.write.approve([lpToken.address, parseUnits("10000", 18)]);
+			await token1.write.approve([lpToken.address, parseUnits("10000", 18)]);
+
+			await lpToken.write.mintLiquidity([
+				parseUnits("100", 18),
+				parseUnits("1000", 18),
+			]);
+
+			const amountOut = await lpToken.read.getAmountOut([
+				token1.address,
+				parseUnits("10", 18),
+			]);
+
+			await viem.assertions.revertWithCustomError(
+				lpToken.write.swapExactIn([
+					token0.address,
+					parseUnits("10", 18),
+					amountOut + 100n,
+				]),
+				lpToken,
+				"InsufficientAmountOut"
+			);
+		});
+	});
 });
