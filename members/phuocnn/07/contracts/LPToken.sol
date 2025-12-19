@@ -8,6 +8,8 @@ import "./FullMath.sol";
 
 contract LPToken is ERC20 {
     using SafeERC20 for IERC20;
+    using FullMath for uint256;
+
     address public token0;
     address public token1;
 
@@ -134,8 +136,7 @@ contract LPToken is ERC20 {
     function swap_amount_in(
         uint256 amountIn,
         address tokenIn,
-        uint256 amountOutMin,
-        address to
+        uint256 amountOutMin
     ) external returns (uint256 amountOut) {
         if (amountIn == 0) revert InvalidInput();
         if (tokenIn != token0 && tokenIn != token1) revert InvalidInput();
@@ -151,13 +152,19 @@ contract LPToken is ERC20 {
             reserveOut = reserve0;
         }
 
-        amountOut = FullMath.mulDiv(amountIn, reserveOut, reserveIn + amountIn);
+        uint256 amountInReal = amountIn.mulDiv(997, 1000);
+
+        amountOut = FullMath.mulDiv(
+            amountInReal,
+            reserveOut,
+            reserveIn + amountInReal
+        );
         if (amountOut < amountOutMin) revert InsufficientOutput();
 
         address tokenOut = tokenIn == token0 ? token1 : token0;
 
         IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
-        IERC20(tokenOut).safeTransfer(to, amountOut);
+        IERC20(tokenOut).safeTransfer(msg.sender, amountOut);
 
         if (tokenIn == token0) {
             reserve0 += amountIn;
@@ -171,8 +178,7 @@ contract LPToken is ERC20 {
     function swap_exact_out(
         uint256 amountOut,
         uint256 amountInMax,
-        address tokenOut,
-        address to
+        address tokenOut
     ) external returns (uint256 amountIn) {
         if (amountOut == 0) revert InvalidInput();
         if (tokenOut != token0 && tokenOut != token1) revert InvalidToken();
@@ -190,10 +196,9 @@ contract LPToken is ERC20 {
 
         if (reserveOut < amountOut) revert InsufficientOutput();
 
-        amountIn = FullMath.mulDivRoundingUp(
-            amountOut,
-            reserveIn,
-            reserveOut - amountOut
+        amountIn = amountOut.mulDivRoundingUp(
+            reserveIn * 1000,
+            (reserveOut - amountOut) * 997
         );
 
         address tokenIn = tokenOut == token0 ? token1 : token0;
@@ -204,7 +209,7 @@ contract LPToken is ERC20 {
             amountInMax
         );
 
-        IERC20(tokenOut).safeTransfer(to, amountOut);
+        IERC20(tokenOut).safeTransfer(msg.sender, amountOut);
 
         if (tokenOut == token0) {
             reserve0 -= amountOut;
@@ -215,7 +220,7 @@ contract LPToken is ERC20 {
         }
 
         if (amountIn > amountInMax) {
-            IERC20(tokenIn).safeTransfer(to, amountInMax - amountIn);
+            IERC20(tokenIn).safeTransfer(msg.sender, amountInMax - amountIn);
         }
     }
 }

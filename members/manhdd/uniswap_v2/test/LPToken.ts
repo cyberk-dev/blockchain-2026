@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { parseUnits, getAddress } from "viem";
 import { network } from "hardhat";
+import { extractEvent } from "./utils.js";
 
 describe("Token", async function () {
+  const connection = await network.connect();
   const { viem } = await network.connect();
   const publicClient = await viem.getPublicClient();
 
@@ -69,6 +71,24 @@ describe("Token", async function () {
 
     assert.equal(reserveA, 1000n, "Reserve A should be 1000");
     assert.equal(reserveB, 2000n, "Reserve B should be 2000");
+  });
+
+  it("should check for balance when adding liquidity", async function () {
+    const { owner, lpToken, tokenA, tokenB } = await deployFixture();
+
+    await tokenA.write.approve([lpToken.address, parseUnits("1000000", 18)]);
+    await tokenB.write.approve([lpToken.address, parseUnits("1000000", 18)]);
+
+    await assert.rejects(
+      async () => {
+        await lpToken.write.addLiquidity([
+          parseUnits("1000001", 18),
+          parseUnits("1000001", 18),
+        ]);
+      },
+      (err: any) => /InsufficientBalance/.test(String(err?.message)),
+      "Expected revert with InsufficientBalance"
+    );
   });
 
   it("should remove liquidity and burn lp tokens", async function () {
