@@ -3,13 +3,15 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "../libraries/FullMath.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import "./PaymentToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {
+    SafeERC20
+} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract Token is ERC20, Ownable, ReentrancyGuard {
-    using FullMath for uint256;
+    using Math for uint256;
     using SafeERC20 for IERC20;
 
     uint256 public basePrice;
@@ -20,7 +22,12 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
     address public feeReceipt;
     uint256 public fee;
 
-    event TokenBought(address buyer, uint256 amount, uint256 cost, uint256 feeAmount);
+    event TokenBought(
+        address buyer,
+        uint256 amount,
+        uint256 cost,
+        uint256 feeAmount
+    );
     event PriceUpdated(uint256 newPrice);
 
     error InvalidAmount();
@@ -66,14 +73,14 @@ contract Token is ERC20, Ownable, ReentrancyGuard {
     ) public pure returns (uint256) {
         if (m == 0) return 0;
         // y = x/a + b
-        return m.mulDivRoundingUp(2 * s + m - 1 + 2 * a * b, 2 * a);
+        return m.mulDiv(2 * s + m - 1 + 2 * a * b, 2 * a, Math.Rounding.Ceil);
     }
 
     function buy(uint256 amount) public onlyBeforeEndTime nonReentrant {
         if (amount == 0) revert InvalidAmount();
 
         uint256 totalCost = getCost(tokenSold, amount, slope, basePrice);
-        
+
         uint256 feeAmount = totalCost.mulDiv(fee, 1 ether);
         uint256 netAmount = totalCost - feeAmount;
 

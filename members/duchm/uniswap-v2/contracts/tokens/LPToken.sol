@@ -3,13 +3,12 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "../libraries/FullMath.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import "hardhat/console.sol";
 
 contract LPToken is ERC20, ReentrancyGuard {
-    using FullMath for uint256;
     using SafeERC20 for IERC20;
+    using Math for uint256;
 
     address public token0;
     address public token1;
@@ -35,24 +34,14 @@ contract LPToken is ERC20, ReentrancyGuard {
         uint256 supply = totalSupply();
         if (supply == 0) {
             liquidity = Math.sqrt(wanted0 * wanted1);
-            // console.log("first liquidity:", liquidity);
         } else {
-            // console.log("amount0:", amount0);
-            // console.log("amount1:", amount1);
-            wanted0 = amount1.mulDivRoundingUp(reserve0, reserve1);
-            wanted1 = amount0.mulDivRoundingUp(reserve1, reserve0);
-            // console.log("Wanted0 before clamp:", wanted0);
-            // console.log("Wanted1 before clamp:", wanted1);
+            wanted0 = amount1.mulDiv(reserve0, reserve1, Math.Rounding.Ceil);
+            wanted1 = amount0.mulDiv(reserve1, reserve0, Math.Rounding.Ceil);
             if (wanted0 > amount0 && wanted1 > amount1) {
                 revert InsufficientLiquidity();
             }
             wanted0 = Math.min(wanted0, amount0); // 200 / 100 -> 100
             wanted1 = Math.min(wanted1, amount1); // 400 / 800 -> 400
-            // console.log("Wanted0 final:", wanted0);
-            // console.log("Wanted1 final:", wanted1);
-            // console.log("supply:", supply);
-            // console.log("reserve0:", reserve0);
-            // console.log("reserve1:", reserve1);
             liquidity = Math.min(
                 wanted0.mulDiv(supply, reserve0), // 200 * 200 / 100 -> 400
                 wanted1.mulDiv(supply, reserve1) // 800 * 200 / 400 -> 400
@@ -76,8 +65,13 @@ contract LPToken is ERC20, ReentrancyGuard {
         uint256 supply = totalSupply();
         amount0 = liquidity.mulDiv(reserve0, supply);
         amount1 = liquidity.mulDiv(reserve1, supply);
-        reserve0 -= amount0;
-        reserve1 -= amount1;
+        if (amount0 > reserve0 || amount1 > reserve1) {
+            revert InsufficientLiquidity();
+        }
+        unchecked {
+            reserve0 -= amount0;
+            reserve1 -= amount1;
+        }
         IERC20(token0).safeTransfer(msg.sender, amount0);
         IERC20(token1).safeTransfer(msg.sender, amount1);
         _burn(msg.sender, liquidity);
@@ -98,9 +92,10 @@ contract LPToken is ERC20, ReentrancyGuard {
         uint256 reserveOut
     ) public pure returns (uint256 amountIn) {
         if (amountOut == 0) return 0;
-        amountIn = amountOut.mulDivRoundingUp(
+        amountIn = amountOut.mulDiv(
             reserveIn,
-            reserveOut - amountOut
+            reserveOut - amountOut,
+            Math.Rounding.Ceil
         );
     }
 
