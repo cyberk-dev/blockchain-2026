@@ -155,6 +155,54 @@ describe("TokenFactory", async function () {
     })
   });
 
+  describe("Should remove liquidity", async function () {
+    it("Remove entire liquidity", async function () {
+      const { lpFactory, token0, token1, owner, viem } = await setup();
+      await lpFactory.write.createLP([token0.address, token1.address]);
+      const pair = await getPair(viem, lpFactory, token0.address, token1.address, owner);
+      await mintAndApprove(token0, owner.account, pair.address, parseEther("10000"));
+      await mintAndApprove(token1, owner.account, pair.address, parseEther("10000"));
+      await viem.assertions.erc20BalancesHaveChanged(
+        pair.write.addLiquidity([parseEther("100"), parseEther("400")]),
+        pair,
+        [{ address: owner.account.address, amount: parseEther('200') }]
+      )
+
+      await viem.assertions.erc20BalancesHaveChanged(
+        pair.write.addLiquidity([parseEther("200"), parseEther("800")]),
+        pair,
+        [{ address: owner.account.address, amount: parseEther('400') }]
+      )
+
+      await viem.assertions.erc20BalancesHaveChanged(
+        pair.write.removeLiquidity([parseEther('400')]),
+        pair,
+        [{ address: owner.account.address, amount: -parseEther('400') }]
+      )
+    })
+
+    it("Exceed amount", async function () {
+      const { lpFactory, token0, token1, owner, viem } = await setup();
+      await lpFactory.write.createLP([token0.address, token1.address]);
+      const pair = await getPair(viem, lpFactory, token0.address, token1.address, owner);
+      await mintAndApprove(token0, owner.account, pair.address, parseEther("10000"));
+      await mintAndApprove(token1, owner.account, pair.address, parseEther("10000"));
+      await viem.assertions.erc20BalancesHaveChanged(
+        pair.write.addLiquidity([parseEther("100"), parseEther("400")]),
+        pair,
+        [{ address: owner.account.address, amount: parseEther('200') }]
+      )
+
+      await viem.assertions.erc20BalancesHaveChanged(
+        pair.write.addLiquidity([parseEther("200"), parseEther("800")]),
+        pair,
+        [{ address: owner.account.address, amount: parseEther('400') }]
+      )
+
+      await viem.assertions.revertWithCustomError(pair.write.removeLiquidity([parseEther('1200')]), pair, 'InsufficientLiquidity')
+    })
+  })
+
   it("Should swap exact in", async function () {
     const { lpFactory, token0, token1, owner, buyer1, buyer2, viem } = await setup();
     await lpFactory.write.createLP([token0.address, token1.address]);
