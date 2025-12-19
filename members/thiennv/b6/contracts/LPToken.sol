@@ -13,21 +13,54 @@ contract LPToken is ERC20, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using Math for uint256;
 
+    error ZeroAddress();
+    error ZeroAmount();
+    error InvalidToken();
+    error IdenticalTokens();
+    error InvalidFee();
+    error InsufficientReserves();
+    error InsufficientLiquidity();
+
+    event LiquidityAdded(
+        address indexed sender,
+        address indexed to,
+        uint256 amountX,
+        uint256 amountY,
+        uint256 liquidity
+    );
+    event LiquidityRemoved(
+        address indexed sender,
+        address indexed to,
+        uint256 amountX,
+        uint256 amountY,
+        uint256 liquidity
+    );
+    event Swap(
+        address indexed sender,
+        address to,
+        address tokenIn,
+        uint256 amountIn,
+        address tokenOut,
+        uint256 amountOut
+    );
+    event Sync(uint256 reserveX, uint256 reserveY);
+
     address public immutable tokenX;
     address public immutable tokenY;
 
     uint256 public reserveX; // reserve of tokenX
     uint256 public reserveY; // reserve of tokenY
     // fee
-    uint256 public fee = 30; // 0.3%
-    uint256 public constant FEE_DENOMINATOR = 10000;
+    uint256 public fee = 3; // 0.3%
+    uint256 public constant FEE_DENOMINATOR = 1000;
 
-    bool private _locked;
+    // bool private _locked;
 
     constructor(address tokenX_, address tokenY_) ERC20("LP Token", "LPT") {
         if (tokenX_ == address(0) || tokenY_ == address(0)) {
-            // revert
+            revert ZeroAddress();
         }
+        if (tokenX_ == tokenY_) revert IdenticalTokens();
         tokenX = tokenX_;
         tokenY = tokenY_;
     }
@@ -38,16 +71,17 @@ contract LPToken is ERC20, ReentrancyGuard {
         address to
     ) external nonReentrant returns (uint256 lp) {
         if (to == address(0)) {
-            //revert
+            revert ZeroAddress();
         }
         if (dx == 0 || dy == 0) {
-            //revert
+            revert ZeroAmount();
         }
 
         uint256 _totalSupply = totalSupply();
         if (_totalSupply == 0) {
-            lp = _sqrt(dx * dy);
+            lp = Math.sqrt(dx * dy);
         } else {
+            if (reserveX == 0 || reserveY == 0) revert InsufficientReserves();
             uint256 dyExpected = (dx * reserveY) / reserveX;
             if (dyExpected > dy) {
                 uint256 dxExpected = (dy * reserveX) / reserveY;
@@ -55,35 +89,39 @@ contract LPToken is ERC20, ReentrancyGuard {
             } else {
                 dy = dyExpected;
             }
-            lp = _min((dx * _totalSupply) / reserveX, (dy * _totalSupply) / reserveY);
+            lp = Math.min((dx * _totalSupply) / reserveX, (dy * _totalSupply) / reserveY);
         }
         if (lp == 0) {
-            //revert
+            revert InsufficientLiquidity();
         }
+
+        reserveX += dx;
+        reserveY += dy;
 
         IERC20(tokenX).safeTransferFrom(msg.sender, address(this), dx);
         IERC20(tokenY).safeTransferFrom(msg.sender, address(this), dy);
         _mint(to, lp);
-        reserveX += dx;
-        reserveY += dy;
-        // emit added
+
+        emit LiquidityAdded(msg.sender, to, dx, dy, lp);
+        emit Sync(reserveX, reserveY);
     }
 
     function removeLiquidity(
         uint256 lp,
         address to
     ) external nonReentrant returns (uint256 dx, uint256 dy) {
-        if (to == address(0) || lp == 0) {
-            //revert
-        }
+        if (to == address(0)) revert ZeroAddress();
+        if (lp == 0) revert ZeroAmount();
 
         uint256 _totalSupply = totalSupply();
+        if (_totalSupply == 0) revert InsufficientLiquidity();
         dx = (lp * reserveX) / _totalSupply;
         dy = (lp * reserveY) / _totalSupply;
 
         if (dx == 0 || dy == 0) {
-            //revert
+            revert InsufficientLiquidity();
         }
+        if (dx > reserveX || dy > reserveY) revert InsufficientReserves();
 
         _burn(msg.sender, lp);
         reserveX -= dx;
@@ -91,28 +129,9 @@ contract LPToken is ERC20, ReentrancyGuard {
 
         IERC20(tokenX).safeTransfer(to, dx);
         IERC20(tokenY).safeTransfer(to, dy);
-        //emit
-    }
 
-    function k() external view returns (uint256) {
-        return reserveX * reserveY;
-    }
-
-    function _sqrt(uint256 value) internal pure returns (uint256 z) {
-        if (value > 3) {
-            z = value;
-            uint256 temp = (value / 2) + 1;
-            while (temp < z) {
-                z = temp;
-                temp = (value / temp + temp) / 2;
-            }
-        } else if (value != 0) {
-            z = 1;
-        }
-    }
-
-    function _min(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a < b ? a : b;
+        emit LiquidityRemoved(msg.sender, to, dx, dy, lp);
+        emit Sync(reserveX, reserveY);
     }
 
     function getAmoutOut(
@@ -120,17 +139,18 @@ contract LPToken is ERC20, ReentrancyGuard {
         address tokenIn,
         uint256 reserveIn, // reserveX
         uint256 reserveOut // reserveY
-    ) external view returns (uint256 amountOut) {
+    ) public view returns (uint256 amountOut) {
         if (tokenIn != tokenX && tokenIn != tokenY) {
-            //revert
+            revert InvalidToken();
         }
         if (amountIn == 0) {
-            //revert
+            revert ZeroAmount();
         }
+        if (reserveIn == 0 || reserveOut == 0) revert InsufficientReserves();
 
-        uint256 dx = amountIn * 997;
+        uint256 dx = amountIn * _feeFactor();
         //uint256 top = dx * reserveOut;
-        uint256 bot = reserveIn * 1000 + dx;
+        uint256 bot = reserveIn * FEE_DENOMINATOR + dx;
         //amountOut = top / bot;
         amountOut = dx.mulDiv(reserveOut, bot);
     }
@@ -139,22 +159,30 @@ contract LPToken is ERC20, ReentrancyGuard {
         address tokenIn,
         uint256 amountIn,
         address to
-    ) external returns (uint256 amountOut) {
+    ) external nonReentrant returns (uint256 amountOut) {
         uint256 reserveIn;
         uint256 reserveOut;
         bool xToY;
+        address tokenOut;
 
         if (tokenIn == tokenX) {
             reserveIn = reserveX;
             reserveOut = reserveY;
             xToY = true;
-        } else {
+            tokenOut = tokenY;
+        } else if (tokenIn == tokenY) {
             reserveIn = reserveY;
             reserveOut = reserveX;
             xToY = false;
+            tokenOut = tokenX;
+        } else {
+            revert InvalidToken();
         }
+        if (to == address(0)) revert ZeroAddress();
+        if (amountIn == 0) revert ZeroAmount();
 
-        amountOut = this.getAmoutOut(amountIn, tokenIn, reserveIn, reserveOut);
+        amountOut = getAmoutOut(amountIn, tokenIn, reserveIn, reserveOut);
+        if (amountOut == 0 || amountOut >= reserveOut) revert InsufficientReserves();
 
         // update reserve
         if (xToY) {
@@ -166,7 +194,10 @@ contract LPToken is ERC20, ReentrancyGuard {
         }
 
         IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
-        IERC20(xToY ? tokenY : tokenX).safeTransfer(to, amountOut);
+        IERC20(tokenOut).safeTransfer(to, amountOut);
+
+        emit Swap(msg.sender, to, tokenIn, amountIn, tokenOut, amountOut);
+        emit Sync(reserveX, reserveY);
     }
 
     // swapExactOut
@@ -183,12 +214,15 @@ contract LPToken is ERC20, ReentrancyGuard {
         address tokenOut,
         uint256 reserveIn, // reserveX
         uint256 reserveOut // reserveY
-    ) external view returns (uint256 amountIn) {
+    ) public view returns (uint256 amountIn) {
         if (tokenOut != tokenX && tokenOut != tokenY) {
-            //revert
+            revert InvalidToken();
         }
         if (amountOut == 0) {
-            //revert
+            revert ZeroAmount();
+        }
+        if (reserveIn == 0 || reserveOut == 0 || amountOut >= reserveOut) {
+            revert InsufficientReserves();
         }
 
         // (reserveX+dx)*(reserveY - dy) = reserveX*reserveY
@@ -199,8 +233,9 @@ contract LPToken is ERC20, ReentrancyGuard {
 
         // dxReal = dx / 0.997 = (reserveX * dy * 1000) / (997 * (reserveY - dy))
 
-        uint256 top = reserveIn * amountOut * 1000;
-        uint256 bot = (reserveOut - amountOut) * 997;
+        uint256 feeFactor = _feeFactor();
+        uint256 top = reserveIn * amountOut * FEE_DENOMINATOR;
+        uint256 bot = (reserveOut - amountOut) * feeFactor;
         amountIn = top.mulDiv(1, bot);
     }
 
@@ -209,27 +244,36 @@ contract LPToken is ERC20, ReentrancyGuard {
         address tokenOut,
         uint256 amountOut,
         address to
-    ) external returns (uint256 amountIn) {
+    ) external nonReentrant returns (uint256 amountIn) {
         uint256 reserveIn;
         uint256 reserveOut;
         bool xToY;
+        address tokenIn;
 
         if (tokenOut == tokenY) {
             reserveIn = reserveX;
             reserveOut = reserveY;
             xToY = true;
-        } else {
+            tokenIn = tokenX;
+        } else if (tokenOut == tokenX) {
             reserveIn = reserveY;
             reserveOut = reserveX;
             xToY = false;
+            tokenIn = tokenY;
+        } else {
+            revert InvalidToken();
         }
+        if (to == address(0)) revert ZeroAddress();
+        if (amountOut == 0) revert ZeroAmount();
+        if (amountOut >= reserveOut) revert InsufficientReserves();
 
-        amountIn = this.getAmoutIn(
+        amountIn = getAmoutIn(
             amountOut,
             tokenOut,
             reserveIn,
             reserveOut
         );
+        if (amountIn == 0) revert InsufficientLiquidity();
 
         // update reserve
         if (xToY) {
@@ -240,11 +284,16 @@ contract LPToken is ERC20, ReentrancyGuard {
             reserveX = reserveOut - amountOut;
         }
 
-        IERC20(xToY ? tokenX : tokenY).safeTransferFrom(
-            msg.sender,
-            address(this),
-            amountIn
-        );
+        IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
         IERC20(tokenOut).safeTransfer(to, amountOut);
+
+        emit Swap(msg.sender, to, tokenIn, amountIn, tokenOut, amountOut);
+        emit Sync(reserveX, reserveY);
+    }
+
+        function _feeFactor() internal view returns (uint256) {
+        uint256 _fee = fee;
+        if (_fee >= FEE_DENOMINATOR) revert InvalidFee();
+        return FEE_DENOMINATOR - _fee;
     }
 }
